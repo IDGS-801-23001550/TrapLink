@@ -1,6 +1,8 @@
 package com.nvm.traplink
 
+import android.content.Intent
 import android.os.Bundle
+import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -11,10 +13,23 @@ class Notificaciones : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_notificaciones)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
+
+        val btnNavEventos = findViewById<TextView>(R.id.btnNavEventos)
+        val btnNavDispositivos = findViewById<TextView>(R.id.btnNavDispositivos)
+
+        btnNavDispositivos.setOnClickListener {
+            val intent = Intent(this, Inicio::class.java)
+            startActivity(intent)
+            overridePendingTransition(0, 0) // Evita parpadeos bruscos de transición
+            finish()
         }
+
+        btnNavEventos.setOnClickListener {
+            val intent = Intent(this, Eventos::class.java)
+            startActivity(intent)
+            overridePendingTransition(0, 0) // Quita la animación por defecto para simular pestañas nativas
+            finish()
+        }
+
     }
 }
