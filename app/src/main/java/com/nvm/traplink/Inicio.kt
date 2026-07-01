@@ -10,18 +10,11 @@ import androidx.activity.enableEdgeToEdge
 import androidx.core.content.ContextCompat
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
-import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.getSystemService
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 
@@ -72,7 +65,7 @@ class Inicio : AppCompatActivity() {
                 putExtra("EXTRA_BATERIA", "40%")
                 putExtra("EXTRA_PREDICCION", "45 días estimados")
             }
-            lanzarNotificacionSistema(this, "Captura Detectada", "Nodo Almacén Central registró actividad.")
+            lanzarNotificacionSistema(this, "🚨 Captura Detectada", "Nodo Almacén Central registró actividad.")
             startActivity(intent)
         }
 
