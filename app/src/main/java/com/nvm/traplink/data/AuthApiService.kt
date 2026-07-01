@@ -9,4 +9,10 @@ interface AuthApiService {
     suspend fun login(
         @Body request: LoginRequestDto
     ): Response<LoginResponseDto> // Usamos Response para manejar códigos de estado
+
+    @POST("usuarios/registrar")
+    suspend fun registrar(
+        @Body request: RegistroRequestDto
+    ): Response<RegistroResponseDto>
+
 }

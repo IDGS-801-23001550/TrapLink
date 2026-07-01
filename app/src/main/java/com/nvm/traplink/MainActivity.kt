@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.textfield.TextInputEditText
 import com.nvm.traplink.data.LoginRequestDto
@@ -18,10 +20,16 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
 
         val etEmail = findViewById<TextInputEditText>(R.id.etEmail)
         val etPassword = findViewById<TextInputEditText>(R.id.etPassword)
         val btnLogin = findViewById<Button>(R.id.btnLogin)
+        val btnRegistrar = findViewById<Button>(R.id.btnRegistrar)
 
         btnLogin.setOnClickListener {
             val email = etEmail.text.toString().trim()
@@ -33,6 +41,13 @@ class MainActivity : AppCompatActivity() {
                 // Ejecutamos la petición dentro de una corrutina en segundo plano
                 ejecutarLogin(email, password)
             }
+        }
+
+        btnRegistrar.setOnClickListener {
+            val intent = Intent(this, Registro::class.java)
+            startActivity(intent)
+            overridePendingTransition(0, 0)
+            finish()
         }
     }
 
