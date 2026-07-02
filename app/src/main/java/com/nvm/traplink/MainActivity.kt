@@ -52,39 +52,35 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun ejecutarLogin(email: String, contrasenia: String) {
-        // lifecycleScope maneja de forma segura el hilo secundario
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                // 1. Preparamos los datos a enviar
                 val request = LoginRequestDto(email, contrasenia)
-
-                // 2. Realizamos la llamada HTTP a Azure
                 val response = RetrofitClient.authService.login(request)
 
-                // 3. Volvemos al hilo principal (UI) para interactuar con la pantalla
                 withContext(Dispatchers.Main) {
                     if (response.isSuccessful && response.body() != null) {
                         val loginResponse = response.body()!!
 
-                        // Obtenemos el token generado por tu controlador de C#
                         val token = loginResponse.token
                         val nombreUsuario = loginResponse.usuario.nombre
 
                         mostrarToast(this@MainActivity, "¡Bienvenido $nombreUsuario!")
 
-                        // TODO: Aquí deberías guardar el 'token' de forma segura más adelante
+                        // [CORRECCIÓN]: Guardamos el token en las SharedPreferences del celular de manera local
+                        val sharedPreferences = getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE)
+                        sharedPreferences.edit().putString("AUTH_TOKEN", token).apply()
 
                         // Redirigimos a la pantalla de Inicio
-                        val intent = Intent(this@MainActivity, Inicio::class.java)
+                        val intent = Intent(this@MainActivity, Inicio::class.java).apply {
+                            putExtra("EXTRA_USUARIO_ID", loginResponse.usuario.usuarioId)
+                        }
                         startActivity(intent)
                         finish()
                     } else {
-                        // Aquí entra si devuelve un código 401 (Credenciales incorrectas) o 400
                         mostrarToast(this@MainActivity, "Credenciales incorrectas")
                     }
                 }
             } catch (e: Exception) {
-                // Cae aquí si no hay internet en el teléfono o el servidor está caído (Error de Red)
                 withContext(Dispatchers.Main) {
                     mostrarToast(this@MainActivity, "Error de red: ${e.message}")
                 }
