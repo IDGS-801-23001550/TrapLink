@@ -81,6 +81,14 @@
             android:layout_marginBottom="16dp"
             android:text="Localizar Dispositivo" />
 
+        <Button
+            android:id="@+id/btnDetener"
+            style="@style/Widget.TrapLink.Button.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:text="Detener Localización" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

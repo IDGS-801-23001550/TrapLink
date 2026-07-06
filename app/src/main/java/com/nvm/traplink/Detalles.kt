@@ -31,6 +31,7 @@ class Detalles : AppCompatActivity() {
         val tvDetallePrediccion = findViewById<TextView>(R.id.tvDetallePrediccion)
 
         val btnLocalizar = findViewById<Button>(R.id.btnLocalizar)
+        val btnDetener = findViewById<Button>(R.id.btnDetener)
         val btnConfirmarReal = findViewById<Button>(R.id.btnConfirmarReal)
         val btnFalsoPositivo = findViewById<Button>(R.id.btnFalsoPositivo)
 
@@ -82,42 +83,81 @@ class Detalles : AppCompatActivity() {
             }
         }
 
-        // 5. EVENTO: Enviar comando de localización al hardware ESP32 real
+        // EVENTO: Enviar comando de localización vía WebSocket
         btnLocalizar.setOnClickListener {
-            if (dispositivoId == -1) return@setOnClickListener
+            val targetDispositivo = nombre ?: "TRMP-0002"
 
-            lifecycleScope.launch(Dispatchers.IO) {
-                try {
-                    val requestComando = RequestComandoDto(
-                        targetId = dispositivoId.toString(),
-                        comando = "LOCALIZAR"
-                    )
-                    val response = RetrofitClient.trapLinkService.enviarComando(tokenCompleto, requestComando)
+            // Llamamos a la función centralizada pasando el target y el comando "LOCALIZAR"
+            enviarComandoWebSocket(targetDispositivo, "LOCALIZAR")
+        }
+        // EVENTO: Enviar comando para detener localización vía WebSocket
+        btnDetener.setOnClickListener {
+            val targetDispositivo = nombre ?: "TRMP-0002"
 
-                    withContext(Dispatchers.Main) {
-                        if (response.isSuccessful) {
-                            Toast.makeText(this@Detalles, "¡Comando enviado con éxito! Buscando nodo...", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(this@Detalles, "Azure rechazó el comando de localización.", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                } catch (e: Exception) {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(this@Detalles, "Error de red: No se pudo enviar el comando.", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
+            // Llamamos a la función centralizada pasando el target y el comando "LOCALIZAR"
+            enviarComandoWebSocket(targetDispositivo, "DETENER_LOCALIZAR")
         }
 
-        // Acciones locales informativas por el momento
+// Acciones locales + Detener localización vía WebSocket
         btnConfirmarReal.setOnClickListener {
             tvDetalleEstado.text = "Estado: Captura Validada por Técnico"
             Toast.makeText(this, "Evento guardado como CAPTURA REAL.", Toast.LENGTH_SHORT).show()
+
+            // Enviamos el comando de detener localización
+            enviarComandoWebSocket(nombre ?: "TRMP-0002", "RESET_TRAMPA")
         }
 
         btnFalsoPositivo.setOnClickListener {
             tvDetalleEstado.text = "Estado: Falso Positivo Descartado"
             Toast.makeText(this, "Evento archivado como FALSO POSITIVO.", Toast.LENGTH_SHORT).show()
+
+            // Enviamos el comando de detener localización
+            enviarComandoWebSocket(nombre ?: "TRMP-0002", "RESET_TRAMPA")
+        }
+    } // Aquí termina el onCreate
+
+    /**
+     * Función auxiliar para conectar al WebSocket de Azure y enviar comandos dinámicos
+     */
+        private fun enviarComandoWebSocket(targetId: String, comando: String) {
+            val client = okhttp3.OkHttpClient()
+            val request = okhttp3.Request.Builder()
+                .url("wss://traplink20260702232427-gvasf4b8b4h0gdg5.canadacentral-01.azurewebsites.net/ws")
+                .build()
+
+            val webSocketListener = object : okhttp3.WebSocketListener() {
+                override fun onOpen(webSocket: okhttp3.WebSocket, response: okhttp3.Response) {
+                    // Estructura JSON dinámica usando las variables de la función
+                    val jsonMessage = """
+                        {
+                          "action": "send_to",
+                          "target": "$targetId",
+                          "message": "$comando"
+                        }
+                    """.trimIndent()
+
+                    webSocket.send(jsonMessage)
+
+                    webSocket.close(1000, "Comando enviado")
+
+                    runOnUiThread {
+                        Toast.makeText(this@Detalles, "WS: Comando '$comando' enviado a $targetId", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                override fun onMessage(webSocket: okhttp3.WebSocket, text: String) {
+                    runOnUiThread {
+                        Toast.makeText(this@Detalles, "Respuesta WS: $text", Toast.LENGTH_LONG).show()
+                    }
+                }
+
+                override fun onFailure(webSocket: okhttp3.WebSocket, t: Throwable, response: okhttp3.Response?) {
+                    runOnUiThread {
+                        Toast.makeText(this@Detalles, "Error WS: ${t.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+
+            client.newWebSocket(request, webSocketListener)
         }
     }
-}
