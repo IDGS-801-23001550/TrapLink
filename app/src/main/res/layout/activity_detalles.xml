@@ -90,12 +90,14 @@
             android:text="Detener Localización" />
 
         <TextView
+            android:id="@+id/tvTituloAcciones"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Acciones de Campo:"
             android:textColor="@color/text_primary"
             android:textStyle="bold"
-            android:layout_marginBottom="8dp"/>
+            android:layout_marginBottom="8dp"
+            android:visibility="gone" />
 
         <Button
             android:id="@+id/btnConfirmarReal"
@@ -103,14 +105,16 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:text="Confirmar Captura Real" />
+            android:text="Confirmar Captura Real"
+            android:visibility="gone" />
 
         <Button
             android:id="@+id/btnFalsoPositivo"
             style="@style/Widget.TrapLink.Button.Danger"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Marcar Falso Positivo" />
+            android:text="Marcar Falso Positivo"
+            android:visibility="gone" />
 
     </LinearLayout>
 

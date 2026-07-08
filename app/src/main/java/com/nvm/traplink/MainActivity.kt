@@ -63,17 +63,20 @@ class MainActivity : AppCompatActivity() {
 
                         val token = loginResponse.token
                         val nombreUsuario = loginResponse.usuario.nombre
+                        // Extraemos el ID numérico real desde el objeto usuario del DTO
+                        val idUsuarioReal = loginResponse.usuario.usuarioId
 
                         mostrarToast(this@MainActivity, "¡Bienvenido $nombreUsuario!")
 
-                        // [CORRECCIÓN]: Guardamos el token en las SharedPreferences del celular de manera local
+                        // Guardamos tanto el TOKEN como el USUARIO_ID en el archivo local de preferencias
                         val sharedPreferences = getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE)
-                        sharedPreferences.edit().putString("AUTH_TOKEN", token).apply()
+                        sharedPreferences.edit()
+                            .putString("AUTH_TOKEN", token)
+                            .putInt("USUARIO_ID", idUsuarioReal) // <-- Aquí queda guardado permanentemente
+                            .apply()
 
-                        // Redirigimos a la pantalla de Inicio
-                        val intent = Intent(this@MainActivity, Inicio::class.java).apply {
-                            putExtra("EXTRA_USUARIO_ID", loginResponse.usuario.usuarioId)
-                        }
+                        // Redirigimos a la pantalla de Inicio (ya no dependemos de arrastrar extras)
+                        val intent = Intent(this@MainActivity, Inicio::class.java)
                         startActivity(intent)
                         finish()
                     } else {

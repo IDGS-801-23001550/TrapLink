@@ -6,15 +6,16 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background"
-    tools:context=".Inicio">
+    tools:context=".VincularActivity">
 
+    <!-- Encabezado superior -->
     <TextView
         android:id="@+id/tvTitleBar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="@color/primary"
         android:padding="16dp"
-        android:text="TrapLink - Dispositivos"
+        android:text="TrapLink - Vincular Dispositivo"
         android:textColor="@color/on_primary"
         android:textSize="18sp"
         android:textStyle="bold"
@@ -22,26 +23,82 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Agregamos el contenedor para deslizar y actualizar -->
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-        android:id="@+id/swipeRefreshLayout"
+    <!-- Contenedor del Formulario -->
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:orientation="vertical"
+        android:padding="24dp"
         app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvTitleBar">
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvDispositivos"
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Agregar Nueva Trampa"
+            android:textColor="@color/text_primary"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Ingresa el numero de serie unico ubicado en la etiqueta de la trampa o utilice la camara para escanear su codigo QR"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- Campo de texto manual -->
+        <EditText
+            android:id="@+id/etNumeroSerie"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="16dp"
-            android:clipToPadding="false"
-            tools:listitem="@layout/item_trampa" />
+            android:layout_height="50dp"
+            android:background="@color/surface"
+            android:hint="Numero de serie (Ej: TRMP-0002)"
+            android:inputType="textCapCharacters"
+            android:paddingHorizontal="16dp"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint"
+            android:layout_marginBottom="16dp"
+            android:elevation="1dp"/>
 
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+        <!-- Botón para Vincular Manual -->
+        <Button
+            android:id="@+id/btnVincularManual"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:backgroundTint="@color/primary"
+            android:text="Vincular Manualmente"
+            android:textColor="@color/on_primary"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp"/>
 
+        <!-- Divisor estético -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="O"
+            android:gravity="center"
+            android:textColor="@color/text_hint"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- Botón para Escanear QR -->
+        <Button
+            android:id="@+id/btnEscanearQR"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:backgroundTint="@color/secondary"
+            android:text="Escanear Codigo QR"
+            android:textColor="@color/on_secondary"
+            android:textStyle="bold"/>
+
+    </LinearLayout>
+
+    <!-- ================= NAVEGACIÓN INFERIOR ================= -->
     <LinearLayout
         android:id="@+id/bottomNavigation"
         android:layout_width="0dp"
@@ -58,11 +115,9 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@color/primary"
             android:text="Nodos"
             android:textColor="@color/on_primary"
             android:gravity="center"
-            android:textStyle="bold"
             android:clickable="true"
             android:focusable="true"
             android:foreground="?android:attr/selectableItemBackground" />
@@ -84,9 +139,11 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:background="@color/primary"
             android:text="Vincular"
             android:textColor="@color/on_primary"
             android:gravity="center"
+            android:textStyle="bold"
             android:clickable="true"
             android:focusable="true"
             android:foreground="?android:attr/selectableItemBackground" />

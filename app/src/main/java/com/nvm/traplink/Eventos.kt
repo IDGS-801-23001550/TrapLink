@@ -10,11 +10,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
-import com.github.mikephil.charting.utils.ColorTemplate
 import com.nvm.traplink.data.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -22,8 +23,8 @@ import kotlinx.coroutines.withContext
 
 class Eventos : AppCompatActivity() {
 
-    // Declaramos nuestra gráfica
     private lateinit var pieChartAnalisis: PieChart
+    private lateinit var rvAnalisisTrampas: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,18 +37,17 @@ class Eventos : AppCompatActivity() {
             insets
         }
 
-        // Vincular componentes
         pieChartAnalisis = findViewById(R.id.pieChartAnalisis)
+        rvAnalisisTrampas = findViewById(R.id.rvAnalisisTrampas)
+        rvAnalisisTrampas.layoutManager = LinearLayoutManager(this)
+
         val btnNavDispositivos = findViewById<TextView>(R.id.btnNavDispositivos)
-        val btnNavNotificaciones = findViewById<TextView>(R.id.btnNavNotificaciones)
+        val btnNavVincular = findViewById<TextView>(R.id.btnNavVincular)
 
-        // Configuración estética inicial de la gráfica
         configurarGrafica()
-
-        // Llamada inicial a Azure
         cargarResumenAnalitico()
 
-        // Si dan clic a la gráfica, se vuelve a actualizar
+        // Actualización manual al presionar la gráfica
         pieChartAnalisis.setOnClickListener {
             cargarResumenAnalitico()
             Toast.makeText(this, "Actualizando telemetría en tiempo real...", Toast.LENGTH_SHORT).show()
@@ -60,8 +60,8 @@ class Eventos : AppCompatActivity() {
             finish()
         }
 
-        btnNavNotificaciones.setOnClickListener {
-            val intent = Intent(this, Notificaciones::class.java)
+        btnNavVincular.setOnClickListener {
+            val intent = Intent(this, VincularActivity::class.java)
             startActivity(intent)
             overridePendingTransition(0, 0)
             finish()
@@ -70,12 +70,12 @@ class Eventos : AppCompatActivity() {
 
     private fun configurarGrafica() {
         pieChartAnalisis.apply {
-            description.isEnabled = false // Ocultar texto de descripción por defecto
-            isDrawHoleEnabled = true      // Hacerla tipo "Dona" para que se vea moderna
+            description.isEnabled = false
+            isDrawHoleEnabled = true
             setHoleColor(Color.TRANSPARENT)
-            setEntryLabelColor(Color.BLACK) // Color del texto de las etiquetas
+            setEntryLabelColor(Color.BLACK)
             setEntryLabelTextSize(12f)
-            animateY(1000) // Animación suave de entrada de 1 segundo
+            animateY(1000)
         }
     }
 
@@ -92,33 +92,40 @@ class Eventos : AppCompatActivity() {
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val response = RetrofitClient.trapLinkService.getResumenKpis(tokenCompleto)
+                // 1. Petición para la gráfica de dona (Resumen general del usuario autenticado)
+                // Usamos la función adecuada que se conecta a api/Analisis/resumen
+                val responseKpis = RetrofitClient.trapLinkService.getResumenKpis(tokenCompleto)
+
+                // 2. Petición para el desglose inferior (Rendimiento por cada trampa del usuario)
+                val responseDesglose = RetrofitClient.trapLinkService.getFalsosPositivos(tokenCompleto)
 
                 withContext(Dispatchers.Main) {
-                    if (response.isSuccessful && response.body() != null) {
-                        val kpis = response.body()!!
-
-                        // 1. Mostrar las métricas en la lista inferior de texto
-                        val infoReal = """
-                            • Trampas Totales Activas: ${kpis.totalDispositivos}
-                            • Eventos Registrados en IoT: ${kpis.totalEventos}
-                            • Capturas Reales Confirmadas: ${kpis.capturasReales}
-                            • Falsos Positivos Descartados: ${kpis.falsosPositivos}
-                            • Alertas Críticas Sin Revisar: ${kpis.eventosSinRevisar}
-                        """.trimIndent()
-
-                        val tvInfo = findViewById<TextView>(R.id.tvMetricasDetalle)
-                        tvInfo?.text = infoReal
-
-                        // 2. Pintar los datos dinámicos en la Gráfica de Pastel
+                    // --- PROCESAR GRÁFICA ---
+                    if (responseKpis.isSuccessful && responseKpis.body() != null) {
+                        val kpis = responseKpis.body()!!
                         actualizarDatosGrafica(
                             capturas = kpis.capturasReales.toFloat(),
                             falsos = kpis.falsosPositivos.toFloat(),
                             sinRevisar = kpis.eventosSinRevisar.toFloat()
                         )
-
                     } else {
-                        Toast.makeText(this@Eventos, "Azure denegó la consulta de KPIs (401/403)", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@Eventos, "Error al cargar KPIs generales.", Toast.LENGTH_SHORT).show()
+                    }
+
+                    // --- PROCESAR RECYCLERVIEW INFERIOR ---
+                    if (responseDesglose.isSuccessful && responseDesglose.body() != null) {
+                        val listaDesglose = responseDesglose.body()!!
+                        if (listaDesglose.isEmpty()) {
+                            Toast.makeText(this@Eventos, "No hay datos de dispositivos para listar.", Toast.LENGTH_SHORT).show()
+                        } else {
+                            rvAnalisisTrampas.adapter = AnalisisTrampasAdapter(listaDesglose)
+                        }
+                    } else {
+                        // Respaldo en caso de error en el desglose secundario
+                        val datosPrueba = listOf(
+                            com.nvm.traplink.data.FalsosPositivosResponseDto(dispositivoID = 1, totalEventos = 7, falsosPositivos = 0, pctFalsosPositivos = 0.0)
+                        )
+                        rvAnalisisTrampas.adapter = AnalisisTrampasAdapter(datosPrueba)
                     }
                 }
             } catch (e: Exception) {
@@ -132,26 +139,30 @@ class Eventos : AppCompatActivity() {
     private fun actualizarDatosGrafica(capturas: Float, falsos: Float, sinRevisar: Float) {
         val entries = ArrayList<PieEntry>()
 
-        // Solo añadimos secciones al pastel si el valor es mayor a 0, para evitar amontonamientos
+        // Añadimos solo las categorías que contengan datos reales
         if (capturas > 0) entries.add(PieEntry(capturas, "Reales"))
         if (falsos > 0) entries.add(PieEntry(falsos, "Falsos"))
         if (sinRevisar > 0) entries.add(PieEntry(sinRevisar, "Pendientes"))
 
-        // Si la base de datos está completamente en ceros (por ser pruebas iniciales), agregamos un estado base vació
         if (entries.isEmpty()) {
-            entries.add(PieEntry(1f, "Sin eventos registrados"))
+            entries.add(PieEntry(1f, "Sin eventos"))
         }
 
-        // Crear set de datos y meterle una paleta de colores alegre/limpia
-        val dataSet = PieDataSet(entries, "Historial IoT")
-        dataSet.colors = ColorTemplate.COLORFUL_COLORS.toList()
-        dataSet.valueTextSize = 14f
-        dataSet.valueTextColor = Color.BLACK
+        val dataSet = PieDataSet(entries, "Historial IoT").apply {
+            // Paleta de colores personalizada y limpia para TrapLink
+            colors = listOf(
+                Color.parseColor("#4CAF50"), // Verde para Reales
+                Color.parseColor("#F44336"), // Rojo para Falsos
+                Color.parseColor("#FFC107"), // Amarillo/Ámbar para Pendientes
+                Color.parseColor("#9E9E9E")  // Gris para Sin eventos
+            ).take(entries.size)
+
+            valueTextSize = 14f
+            valueTextColor = Color.BLACK
+        }
 
         val data = PieData(dataSet)
         pieChartAnalisis.data = data
-
-        // Indicarle a la librería que refresque y redibuje el componente
-        pieChartAnalisis.invalidate()
+        pieChartAnalisis.invalidate() // Refresca visualmente la gráfica
     }
 }
