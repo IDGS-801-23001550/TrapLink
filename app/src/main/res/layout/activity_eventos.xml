@@ -8,7 +8,6 @@
     android:background="@color/background"
     tools:context=".Eventos">
 
-    <!-- Encabezado superior -->
     <TextView
         android:id="@+id/tvTitleBar"
         android:layout_width="0dp"
@@ -23,7 +22,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- CONTENIDO DE EVENTOS (RF-APP-05) -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -39,27 +37,33 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Métricas e Historial (Telemetría)"
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginBottom="12dp"/>
 
-        <!-- Gráfica de pastel dinámica conectada a Azure -->
         <com.github.mikephil.charting.charts.PieChart
             android:id="@+id/pieChartAnalisis"
             android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:layout_marginBottom="16dp"/>
-
+            android:layout_height="180dp"
+            android:layout_marginBottom="12dp"/>
 
         <TextView
-            android:id="@+id/tvMetricasDetalle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Cargando telemetría en tiempo real..."
+            android:text="Rendimiento Detallado por Nodo"
             android:textColor="@color/text_primary"
             android:textSize="14sp"
-            android:lineSpacingExtra="4dp"/>
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+
+        <!-- REEMPLAZO: Lista dinámica de trampas con scroll independiente -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvAnalisisTrampas"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            tools:listitem="@layout/item_analisis_trampa" />
     </LinearLayout>
 
-    <!-- ================= NAVEGACIÓN INFERIOR ================= -->
     <LinearLayout
         android:id="@+id/bottomNavigation"
         android:layout_width="0dp"
@@ -98,11 +102,11 @@
             android:foreground="?android:attr/selectableItemBackground" />
 
         <TextView
-            android:id="@+id/btnNavNotificaciones"
+            android:id="@+id/btnNavVincular"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:text="Alertas"
+            android:text="Vincular"
             android:textColor="@color/on_primary"
             android:gravity="center"
             android:clickable="true"

@@ -16,9 +16,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.nvm.traplink.data.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -28,6 +31,7 @@ class Inicio : AppCompatActivity() {
 
     private val CHANNEL_ID = "trap_alerts_channel"
     private lateinit var rvDispositivos: RecyclerView
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout // Declaramos el componente
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -44,18 +48,30 @@ class Inicio : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_inicio)
 
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
+
         createNotificationChannel()
         checkNotificationPermission()
 
-        // Inicializar el RecyclerView dinámico
         rvDispositivos = findViewById(R.id.rvDispositivos)
         rvDispositivos.layoutManager = LinearLayoutManager(this)
 
-        val btnNavEventos = findViewById<TextView>(R.id.btnNavEventos)
-        val btnNavNotificaciones = findViewById<TextView>(R.id.btnNavNotificaciones)
+        // Inicializamos el SwipeRefreshLayout
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
 
-        // IMPORTANTE: Aquí recuperamos la lista de Azure en tiempo real
+        val btnNavEventos = findViewById<TextView>(R.id.btnNavEventos)
+        val btnNavVincular = findViewById<TextView>(R.id.btnNavVincular)
+
         cargarDispositivosDesdeAzure()
+
+        // Configuramos la acción al deslizar hacia abajo
+        swipeRefreshLayout.setOnRefreshListener {
+            cargarDispositivosDesdeAzure()
+        }
 
         btnNavEventos.setOnClickListener {
             val intent = Intent(this, Eventos::class.java)
@@ -64,8 +80,8 @@ class Inicio : AppCompatActivity() {
             finish()
         }
 
-        btnNavNotificaciones.setOnClickListener {
-            val intent = Intent(this, Notificaciones::class.java)
+        btnNavVincular.setOnClickListener {
+            val intent = Intent(this, VincularActivity::class.java)
             startActivity(intent)
             overridePendingTransition(0, 0)
             finish()
@@ -75,28 +91,27 @@ class Inicio : AppCompatActivity() {
     private fun cargarDispositivosDesdeAzure() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                // 1. Recuperamos el token almacenado previamente en el Login
                 val sharedPreferences = getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE)
                 val tokenGuardado = sharedPreferences.getString("AUTH_TOKEN", "") ?: ""
 
                 if (tokenGuardado.isEmpty()) {
                     withContext(Dispatchers.Main) {
+                        swipeRefreshLayout.isRefreshing = false // Apagar animación si falla
                         Toast.makeText(this@Inicio, "Error: Sesión inválida. Vuelve a iniciar sesión.", Toast.LENGTH_LONG).show()
                     }
                     return@launch
                 }
 
-                // 2. Formateamos la cabecera exacta con el estándar Bearer corregido
                 val tokenCompleto = "Bearer $tokenGuardado"
-
                 val response = RetrofitClient.trapLinkService.getMisDispositivos(tokenCompleto)
 
                 withContext(Dispatchers.Main) {
+                    swipeRefreshLayout.isRefreshing = false // Apagar animación al recibir respuesta
+
                     if (response.isSuccessful && response.body() != null) {
                         val listaTrampas = response.body()!!
 
                         listaTrampas.forEach { trampa ->
-                            // Validamos "Captura" o el estado activo con alerta si se requiere
                             if (trampa.estado.contains("Captura", ignoreCase = true)) {
                                 lanzarNotificacionSistema(this@Inicio, "🚨 Captura Detectada", "El dispositivo ${trampa.numeroSerie} registró actividad.")
                             }
@@ -119,6 +134,7 @@ class Inicio : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
+                    swipeRefreshLayout.isRefreshing = false // Apagar animación si hay excepción de red
                     Toast.makeText(this@Inicio, "Error de conexión en Nodos: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
@@ -136,15 +152,15 @@ class Inicio : AppCompatActivity() {
     private fun createNotificationChannel(){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
             val name = "Alertas de Trampas"
-            val descriptionText = "Notificaciones del sistema para capturas y batería baja"
+            val descriptionText = "VincularActivity del sistema para capturas y batería baja"
             val importance = NotificationManager.IMPORTANCE_HIGH
 
             val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
                 description = descriptionText
             }
 
-            val notificationManager: NotificationManager =
-                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            // Dejar únicamente la llamada correcta al servicio de notificaciones
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
     }

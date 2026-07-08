@@ -29,10 +29,28 @@ interface TrapLinkApiService {
     ): Response<ResumenKpisResponseDto>
 
     @GET("Analisis/sla-transmision")
-    suspend fun getSlaTransmision(): Response<List<SlaTransmisionResponseDto>>
+    suspend fun getSlaTransmision(
+        @Header("Authorization") token: String
+    ): Response<List<SlaTransmisionResponseDto>>
 
     @GET("Analisis/falsos-positivos")
-    suspend fun getFalsosPositivos(): Response<List<FalsosPositivosResponseDto>>
+    suspend fun getFalsosPositivos(
+        @Header("Authorization") token: String
+    ): Response<List<FalsosPositivosResponseDto>>
+
+    // --- ---
+    @GET("Analisis/eventos/pendientes")
+    suspend fun getEventosPendientes(
+        @Header("Authorization") token: String
+    ): Response<List<EventoPendienteResponseDto>>
+
+    @PUT("Analisis/eventos/{eventoId}/confirmar")
+    suspend fun confirmarEvento(
+        @Header("Authorization") token: String,
+        @Path("eventoId") eventoId: Long,
+        @Body request: ConfirmarEventoDto
+    ): Response<Map<String, Any>>
+
 
     // --- ENDPOINTS DE PREDICCIONES ---
     @GET("Predicciones/dispositivo/{dispositivoId}")
@@ -43,6 +61,7 @@ interface TrapLinkApiService {
 
     @GET("Predicciones/bateria/alertas")
     suspend fun getAlertasBateria(
+        @Header("Authorization") token: String,
         @Query("umbralHoras") umbralHoras: Double = 48.0
     ): Response<List<PrediccionResponseDto>>
 }
