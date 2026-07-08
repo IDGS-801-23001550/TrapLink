@@ -83,43 +83,38 @@ class Detalles : AppCompatActivity() {
             }
         }
 
-        // EVENTO: Enviar comando de localización vía WebSocket
+        // Botones para localizar y detener localizacón
         btnLocalizar.setOnClickListener {
-            val targetDispositivo = nombre ?: "TRMP-0002"
-
-            // Llamamos a la función centralizada pasando el target y el comando "LOCALIZAR"
-            enviarComandoWebSocket(targetDispositivo, "LOCALIZAR")
+            // Enviar comando de localización vía WebSocket
+            enviarComandoWebSocket(nombre, "LOCALIZAR")
         }
-        // EVENTO: Enviar comando para detener localización vía WebSocket
+
         btnDetener.setOnClickListener {
-            val targetDispositivo = nombre ?: "TRMP-0002"
-
-            // Llamamos a la función centralizada pasando el target y el comando "LOCALIZAR"
-            enviarComandoWebSocket(targetDispositivo, "DETENER_LOCALIZAR")
+            // Enviar comando para detener localización vía WebSocket
+            enviarComandoWebSocket(nombre, "DETENER_LOCALIZAR")
         }
 
-// Acciones locales + Detener localización vía WebSocket
+        // Botones para captura y falso positivo ambos con función de reset a la trampa
         btnConfirmarReal.setOnClickListener {
             tvDetalleEstado.text = "Estado: Captura Validada por Técnico"
             Toast.makeText(this, "Evento guardado como CAPTURA REAL.", Toast.LENGTH_SHORT).show()
 
-            // Enviamos el comando de detener localización
-            enviarComandoWebSocket(nombre ?: "TRMP-0002", "RESET_TRAMPA")
+            // Enviamos el comando para reiniciar la trampa
+            enviarComandoWebSocket(nombre, "RESET_TRAMPA")
         }
 
         btnFalsoPositivo.setOnClickListener {
             tvDetalleEstado.text = "Estado: Falso Positivo Descartado"
             Toast.makeText(this, "Evento archivado como FALSO POSITIVO.", Toast.LENGTH_SHORT).show()
 
-            // Enviamos el comando de detener localización
-            enviarComandoWebSocket(nombre ?: "TRMP-0002", "RESET_TRAMPA")
+            // Enviamos el comando para reiniciar la trampa
+            enviarComandoWebSocket(nombre, "RESET_TRAMPA")
         }
     } // Aquí termina el onCreate
 
-    /**
-     * Función auxiliar para conectar al WebSocket de Azure y enviar comandos dinámicos
-     */
-        private fun enviarComandoWebSocket(targetId: String, comando: String) {
+
+     //Función conectar al WebSocket y poder enviar comando dinamicos
+        fun enviarComandoWebSocket(targetId: String, comando: String) {
             val client = okhttp3.OkHttpClient()
             val request = okhttp3.Request.Builder()
                 .url("wss://traplink20260702232427-gvasf4b8b4h0gdg5.canadacentral-01.azurewebsites.net/ws")
@@ -127,7 +122,7 @@ class Detalles : AppCompatActivity() {
 
             val webSocketListener = object : okhttp3.WebSocketListener() {
                 override fun onOpen(webSocket: okhttp3.WebSocket, response: okhttp3.Response) {
-                    // Estructura JSON dinámica usando las variables de la función
+                    // Json usando las variables de la función
                     val jsonMessage = """
                         {
                           "action": "send_to",
