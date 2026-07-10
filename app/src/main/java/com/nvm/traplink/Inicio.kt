@@ -8,11 +8,14 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -31,7 +34,10 @@ class Inicio : AppCompatActivity() {
 
     private val CHANNEL_ID = "trap_alerts_channel"
     private lateinit var rvDispositivos: RecyclerView
-    private lateinit var swipeRefreshLayout: SwipeRefreshLayout // Declaramos el componente
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+
+    // SharedPreferences para guardar la preferencia del tema
+    private val prefs by lazy { getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE) }
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -44,6 +50,13 @@ class Inicio : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 1. Aplicar el tema guardado ANTES de inflar vistas o habilitar EdgeToEdge
+        val isDark = prefs.getBoolean("dark_mode", false)
+        AppCompatDelegate.setDefaultNightMode(
+            if (isDark) AppCompatDelegate.MODE_NIGHT_YES
+            else AppCompatDelegate.MODE_NIGHT_NO
+        )
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_inicio)
@@ -57,10 +70,29 @@ class Inicio : AppCompatActivity() {
         createNotificationChannel()
         checkNotificationPermission()
 
+        // 2. Inicializar los componentes del Toggle de Tema
+        val ivToggleIcon = findViewById<ImageView>(R.id.ivToggleTemaIcon)
+        val btnToggleTema = findViewById<FrameLayout>(R.id.btnToggleTema)
+
+        // Asignar el icono correspondiente según el estado actual al iniciar
+        ivToggleIcon.setImageResource(if (isDark) R.drawable.ic_sun else R.drawable.ic_moon)
+
+        // Listener para el botón de cambio de tema
+        btnToggleTema.setOnClickListener {
+            val nuevoModoOscuro = !prefs.getBoolean("dark_mode", false)
+            prefs.edit().putBoolean("dark_mode", nuevoModoOscuro).apply()
+
+            AppCompatDelegate.setDefaultNightMode(
+                if (nuevoModoOscuro) AppCompatDelegate.MODE_NIGHT_YES
+                else AppCompatDelegate.MODE_NIGHT_NO
+            )
+            // Recrea la Activity para aplicar de inmediato los recursos de values-night
+            recreate()
+        }
+
+        // Resto de tus inicializaciones normales
         rvDispositivos = findViewById(R.id.rvDispositivos)
         rvDispositivos.layoutManager = LinearLayoutManager(this)
-
-        // Inicializamos el SwipeRefreshLayout
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
 
         val btnNavEventos = findViewById<TextView>(R.id.btnNavEventos)
@@ -68,7 +100,6 @@ class Inicio : AppCompatActivity() {
 
         cargarDispositivosDesdeAzure()
 
-        // Configuramos la acción al deslizar hacia abajo
         swipeRefreshLayout.setOnRefreshListener {
             cargarDispositivosDesdeAzure()
         }
@@ -91,12 +122,12 @@ class Inicio : AppCompatActivity() {
     private fun cargarDispositivosDesdeAzure() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val sharedPreferences = getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE)
-                val tokenGuardado = sharedPreferences.getString("AUTH_TOKEN", "") ?: ""
+                // Reutilizamos el mismo archivo "TrapLinkPrefs" que ya lee el token
+                val tokenGuardado = prefs.getString("AUTH_TOKEN", "") ?: ""
 
                 if (tokenGuardado.isEmpty()) {
                     withContext(Dispatchers.Main) {
-                        swipeRefreshLayout.isRefreshing = false // Apagar animación si falla
+                        swipeRefreshLayout.isRefreshing = false
                         Toast.makeText(this@Inicio, "Error: Sesión inválida. Vuelve a iniciar sesión.", Toast.LENGTH_LONG).show()
                     }
                     return@launch
@@ -106,7 +137,7 @@ class Inicio : AppCompatActivity() {
                 val response = RetrofitClient.trapLinkService.getMisDispositivos(tokenCompleto)
 
                 withContext(Dispatchers.Main) {
-                    swipeRefreshLayout.isRefreshing = false // Apagar animación al recibir respuesta
+                    swipeRefreshLayout.isRefreshing = false
 
                     if (response.isSuccessful && response.body() != null) {
                         val listaTrampas = response.body()!!
@@ -134,7 +165,7 @@ class Inicio : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    swipeRefreshLayout.isRefreshing = false // Apagar animación si hay excepción de red
+                    swipeRefreshLayout.isRefreshing = false
                     Toast.makeText(this@Inicio, "Error de conexión en Nodos: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
@@ -159,7 +190,6 @@ class Inicio : AppCompatActivity() {
                 description = descriptionText
             }
 
-            // Dejar únicamente la llamada correcta al servicio de notificaciones
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }

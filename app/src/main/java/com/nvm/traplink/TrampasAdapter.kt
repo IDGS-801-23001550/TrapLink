@@ -32,20 +32,19 @@ class TrampasAdapter(
 
         val context = holder.itemView.context
 
-        // 1. Color del texto del estado (Captura vs Activo)
-        if (trampa.estado.contains("Captura", ignoreCase = true)) {
+        // Unificación de la lógica visual (Texto + Círculo)
+        if (!trampa.enLinea) {
+            // CASO 1: Desconectado (Gris)
+            holder.tvEstadoTrampa.setTextColor(ContextCompat.getColor(context, R.color.status_disconnected))
+            holder.vStatusDot.setBackgroundResource(R.drawable.circle_status_offline) // Asegura usar tu drawable gris
+        } else if (trampa.estado.contains("Captura", ignoreCase = true) || trampa.estado.contains("Alerta", ignoreCase = true)) {
+            // CASO 2: Captura / Alerta activa (Rojo)
             holder.tvEstadoTrampa.setTextColor(ContextCompat.getColor(context, R.color.status_capture))
+            // Si tienes un drawable para círculo rojo puedes ponerlo aquí, ej: holder.vStatusDot.setBackgroundResource(R.drawable.circle_status_capture)
         } else {
+            // CASO 3: Conectado / Monitoreando normal (Verde)
             holder.tvEstadoTrampa.setTextColor(ContextCompat.getColor(context, R.color.status_active))
-        }
-
-        // 2. Color del indicador de WebSocket (enLinea)
-        if (trampa.enLinea) {
-            // Círculo Verde (Puedes cambiarlo por un color de tu archivo colors.xml si gustas)
-            holder.vStatusDot.setBackgroundColor(Color.parseColor("#4CAF50"))
-        } else {
-            // Círculo Gris
-            holder.vStatusDot.setBackgroundColor(Color.parseColor("#9E9E9E"))
+            // Si tienes un drawable para círculo verde, ej: holder.vStatusDot.setBackgroundResource(R.drawable.circle_status_online)
         }
 
         holder.itemView.setOnClickListener { onTrampaClick(trampa) }
