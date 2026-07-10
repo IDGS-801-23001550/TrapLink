@@ -1,4 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">TrapLink</string>
+
+    <string name="login_title">TrapLink</string>
+    <string name="login_subtitle">Control de Plagas e IoT</string>
+    <string name="login_email_hint">Correo Electrónico</string>
+    <string name="login_password_hint">Contraseña</string>
+    <string name="login_forgot_password">¿Olvidaste tu contraseña?</string>
+    <string name="login_btn_signin">Iniciar Sesión</string>
+    <string name="login_no_account">¿No tienes cuenta?</string>
+    <string name="login_btn_register">Regístrate</string>
+
+    <string name="home_title">Tus Nodos</string>
+    <string name="home_subtitle">Monitoreo en tiempo real.</string>
+    <string name="cd_toggle_theme">Cambiar tema</string>
+    <string name="cd_node_icon">Icono de nodo</string>
+    <string name="cd_arrow">Ver detalle</string>
 </resources>

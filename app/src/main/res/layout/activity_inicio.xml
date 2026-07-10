@@ -5,50 +5,122 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background"
+    android:background="@color/app_bg_light"
     tools:context=".Inicio">
 
-    <TextView
-        android:id="@+id/tvTitleBar"
+    <LinearLayout
+        android:id="@+id/headerContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@color/primary"
-        android:padding="16dp"
-        android:text="TrapLink - Dispositivos"
-        android:textColor="@color/on_primary"
-        android:textSize="18sp"
+        android:background="@drawable/bg_header"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <FrameLayout
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:background="@drawable/bg_badge_logo">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_smartphone"
+                app:tint="@color/text_title_dark" /> </FrameLayout>
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:text="@string/app_name"
+            android:textColor="@color/text_title_dark" android:textSize="19sp"
+            android:textStyle="bold" />
+
+        <FrameLayout
+            android:id="@+id/btnToggleTema"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:background="@drawable/bg_theme_toggle"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?android:attr/selectableItemBackgroundBorderless">
+
+            <ImageView
+                android:id="@+id/ivToggleTemaIcon"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_gravity="center"
+                android:contentDescription="@string/cd_toggle_theme"
+                android:src="@drawable/ic_moon" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <!-- Título de sección -->
+    <TextView
+        android:id="@+id/tvScreenTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="22dp"
+        android:layout_marginEnd="20dp"
+        android:text="@string/home_title"
+        android:textColor="@color/accent_neon"
+        android:textSize="26sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/headerContainer" />
 
-    <!-- Agregamos el contenedor para deslizar y actualizar -->
+    <TextView
+        android:id="@+id/tvScreenSubtitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="20dp"
+        android:text="@string/home_subtitle"
+        android:textColor="@color/text_body_grey"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvScreenTitle" />
+
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefreshLayout"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginTop="16dp"
         app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvTitleBar">
+        app:layout_constraintTop_toBottomOf="@id/tvScreenSubtitle">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvDispositivos"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="16dp"
             android:clipToPadding="false"
+            android:paddingHorizontal="20dp"
+            android:paddingBottom="20dp"
             tools:listitem="@layout/item_trampa" />
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
+    <!-- Barra inferior -->
     <LinearLayout
         android:id="@+id/bottomNavigation"
         android:layout_width="0dp"
-        android:layout_height="56dp"
-        android:background="@color/primary_dark"
+        android:layout_height="72dp"
+        android:background="@drawable/bg_bottom_nav"
+        android:elevation="10dp"
         android:orientation="horizontal"
-        android:elevation="8dp"
+        android:paddingTop="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -57,39 +129,55 @@
             android:id="@+id/btnNavDispositivos"
             android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:layout_marginHorizontal="6dp"
             android:layout_weight="1"
-            android:background="@color/primary"
-            android:text="Nodos"
-            android:textColor="@color/on_primary"
-            android:gravity="center"
-            android:textStyle="bold"
-            android:clickable="true"
+            android:background="@drawable/bg_nav_item_active"
+            android:clickable="false"
+            android:drawablePadding="4dp"
+            android:drawableTop="@drawable/ic_nav_nodos"
+            android:drawableTint="@color/text_title_dark"
             android:focusable="true"
-            android:foreground="?android:attr/selectableItemBackground" />
+            android:foreground="?android:attr/selectableItemBackground"
+            android:gravity="center"
+            android:paddingTop="8dp"
+            android:text="Nodos"
+            android:textColor="@color/text_title_dark"
+            android:textSize="11sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/btnNavEventos"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:text="Eventos"
-            android:textColor="@color/on_primary"
-            android:gravity="center"
             android:clickable="true"
+            android:drawablePadding="4dp"
+            android:drawableTop="@drawable/ic_nav_eventos"
+            android:drawableTint="@color/nav_icon_inactive"
             android:focusable="true"
-            android:foreground="?android:attr/selectableItemBackground" />
+            android:foreground="?android:attr/selectableItemBackground"
+            android:gravity="center"
+            android:paddingTop="8dp"
+            android:text="Eventos"
+            android:textColor="@color/nav_icon_inactive"
+            android:textSize="11sp" />
 
         <TextView
             android:id="@+id/btnNavVincular"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:text="Vincular"
-            android:textColor="@color/on_primary"
-            android:gravity="center"
             android:clickable="true"
+            android:drawablePadding="4dp"
+            android:drawableTop="@drawable/ic_nav_vincular"
+            android:drawableTint="@color/nav_icon_inactive"
             android:focusable="true"
-            android:foreground="?android:attr/selectableItemBackground" />
+            android:foreground="?android:attr/selectableItemBackground"
+            android:gravity="center"
+            android:paddingTop="8dp"
+            android:text="Vincular"
+            android:textColor="@color/nav_icon_inactive"
+            android:textSize="11sp" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

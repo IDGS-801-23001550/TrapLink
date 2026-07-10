@@ -1,13 +1,20 @@
 package com.nvm.traplink
 
+import android.Manifest
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
+import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
@@ -22,14 +29,24 @@ class Detalles : AppCompatActivity() {
     private var tokenGuardado: String = ""
     private var dispositivoId: Int = -1
     private var eventoPendienteId: Long = -1
-    private var tieneAlertaActiva: Boolean = false // Bandera de validación
+    private var tieneAlertaActiva: Boolean = false
 
     private lateinit var tvDetalleEstado: TextView
     private lateinit var tvTituloAcciones: TextView
     private lateinit var btnConfirmarReal: Button
     private lateinit var btnFalsoPositivo: Button
 
+    // Instancia de SharedPreferences compartida con el archivo centralizado
+    private val prefs by lazy { getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 1. Inyectar tema activo ANTES del super.onCreate
+        val isDark = prefs.getBoolean("dark_mode", false)
+        AppCompatDelegate.setDefaultNightMode(
+            if (isDark) AppCompatDelegate.MODE_NIGHT_YES
+            else AppCompatDelegate.MODE_NIGHT_NO
+        )
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_detalles)
@@ -40,7 +57,28 @@ class Detalles : AppCompatActivity() {
             insets
         }
 
-        // 1. Vincular vistas del XML
+        // 2. Controladores del Toggle del Tema e Icono
+        val ivToggleIcon = findViewById<ImageView>(R.id.ivToggleTemaIcon)
+        val btnToggleTema = findViewById<FrameLayout>(R.id.btnToggleTema)
+        ivToggleIcon.setImageResource(if (isDark) R.drawable.ic_sun else R.drawable.ic_moon)
+
+        btnToggleTema.setOnClickListener {
+            val nuevoModoOscuro = !prefs.getBoolean("dark_mode", false)
+            prefs.edit().putBoolean("dark_mode", nuevoModoOscuro).apply()
+
+            AppCompatDelegate.setDefaultNightMode(
+                if (nuevoModoOscuro) AppCompatDelegate.MODE_NIGHT_YES
+                else AppCompatDelegate.MODE_NIGHT_NO
+            )
+            recreate()
+        }
+
+        // 3. Botón de retroceso a Inicio
+        findViewById<FrameLayout>(R.id.btnAtras).setOnClickListener {
+            finish() // Finaliza esta actividad de subpestaña y regresa de forma limpia
+        }
+
+        // Vincular vistas restantes
         val tvDetalleNombre = findViewById<TextView>(R.id.tvDetalleNombre)
         tvDetalleEstado = findViewById<TextView>(R.id.tvDetalleEstado)
         val tvDetalleBateria = findViewById<TextView>(R.id.tvDetalleBateria)
@@ -53,28 +91,25 @@ class Detalles : AppCompatActivity() {
         btnConfirmarReal = findViewById<Button>(R.id.btnConfirmarReal)
         btnFalsoPositivo = findViewById<Button>(R.id.btnFalsoPositivo)
 
-        // 2. Recuperar Token de sesión
-        val sharedPreferences = getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE)
-        tokenGuardado = sharedPreferences.getString("AUTH_TOKEN", "") ?: ""
+        // Recuperar Token utilizando la referencia lazy unificada
+        tokenGuardado = prefs.getString("AUTH_TOKEN", "") ?: ""
         val tokenCompleto = "Bearer $tokenGuardado"
 
-        // 3. Capturar datos del Intent
+        // Capturar datos recibidos por el Intent
         dispositivoId = intent.getIntExtra("EXTRA_DISPOSITIVO_ID", -1)
         val nombre = intent.getStringExtra("EXTRA_NOMBRE") ?: "Dispositivo"
-        val estadoBase = intent.getStringExtra("EXTRA_ESTADO") ?: "Monitoreando" // "Desconectado", "Monitoreando", etc.
+        val estadoBase = intent.getStringExtra("EXTRA_ESTADO") ?: "Monitoreando"
 
         tvDetalleNombre.text = nombre
         tvDetalleBateria.text = "Carga Física: Cargando..."
         tvDetallePrediccion.text = "Vida útil estimada: Cargando..."
 
-        // Por defecto, nos aseguramos que en código mantengan los estados de deshabilitados
         btnConfirmarReal.isEnabled = false
         btnFalsoPositivo.isEnabled = false
 
-        // 4. Consumir APIs
+        // Consumir APIs con validación de color dinámico
         if (dispositivoId != -1 && tokenGuardado.isNotEmpty()) {
             lifecycleScope.launch(Dispatchers.IO) {
-                // Hilo A: Cargar Predicciones de IA
                 try {
                     val responsePred = RetrofitClient.trapLinkService.getPrediccionesPorDispositivo(tokenCompleto, dispositivoId)
                     withContext(Dispatchers.Main) {
@@ -96,22 +131,20 @@ class Detalles : AppCompatActivity() {
                     }
                 }
 
-                // Hilo B: Buscar Eventos Pendientes de esta trampa específica evaluando la conexión
+                // Hilo B: Buscar Eventos Pendientes evaluando la conexión
                 try {
-                    // Si desde el inicio el backend sabe que está desconectada, pintamos "Desconectada" de una vez
                     if (estadoBase.equals("Desconectado", ignoreCase = true) || estadoBase.equals("Offline", ignoreCase = true)) {
                         withContext(Dispatchers.Main) {
                             tvDetalleEstado.text = "Estado: Desconectada"
-                            tvDetalleEstado.setTextColor(android.graphics.Color.RED) // Opcional: Resaltar en rojo
+                            // Cambiado a Gris Semántico de tus recursos para concordar con item_trampa
+                            tvDetalleEstado.setTextColor(ContextCompat.getColor(this@Detalles, R.color.status_disconnected))
                             tieneAlertaActiva = false
 
-                            // Nos aseguramos que todo el bloque de acciones se esconda por seguridad
                             tvTituloAcciones.visibility = View.GONE
                             btnConfirmarReal.visibility = View.GONE
                             btnFalsoPositivo.visibility = View.GONE
                         }
                     } else {
-                        // SI ESTÁ CONECTADA: Validamos si tiene alertas en la API de Ricardo
                         val responseEv = RetrofitClient.trapLinkService.getEventosPendientes(tokenCompleto)
 
                         withContext(Dispatchers.Main) {
@@ -122,55 +155,56 @@ class Detalles : AppCompatActivity() {
                                 if (eventoDeEstaTrampa != null) {
                                     eventoPendienteId = eventoDeEstaTrampa.eventoID
                                     tvDetalleEstado.text = "Estado: Alerta Activa (Falta Localizar)"
+                                    // Rojo de captura
+                                    tvDetalleEstado.setTextColor(ContextCompat.getColor(this@Detalles, R.color.status_capture))
                                     tieneAlertaActiva = true
                                 } else {
-                                    // CASO: Conectada pero sin eventos activos
                                     tvDetalleEstado.text = "Estado: Monitoreando (Sin novedades)"
+                                    // Verde activo
+                                    tvDetalleEstado.setTextColor(ContextCompat.getColor(this@Detalles, R.color.status_active))
                                     tieneAlertaActiva = false
                                 }
                             } else {
-                                // Respaldar el estado por si la API falla pero sabemos que está conectada
                                 tvDetalleEstado.text = "Estado: Monitoreando (Sin novedades)"
+                                tvDetalleEstado.setTextColor(ContextCompat.getColor(this@Detalles, R.color.status_active))
                                 tieneAlertaActiva = false
                             }
                         }
                     }
                 } catch (e: Exception) {
-                    android.util.Log.e("TrapLinkError", "Fallo total en Hilo B al validar estados", e)
+                    android.util.Log.e("TrapLinkError", "Fallo total en validar estados", e)
                 }
-
             }
         }
 
-        // --- MANEJO DE COMANDOS WEBSOCKET ---
+        // Manejo de Comandos WS
         btnLocalizar.setOnClickListener {
             enviarComandoWebSocket(nombre, "LOCALIZAR")
             tvDetalleEstado.text = "Estado: Localizando dispositivo en campo..."
+            tvDetalleEstado.setTextColor(ContextCompat.getColor(this, R.color.secondary))
         }
 
         btnDetener.setOnClickListener {
             enviarComandoWebSocket(nombre, "DETENER_LOCALIZAR")
 
-            // Lógica de validación de flujo seguro:
             if (tieneAlertaActiva) {
                 tvDetalleEstado.text = "Estado: Alerta Activa (Pendiente de Revisión)"
+                tvDetalleEstado.setTextColor(ContextCompat.getColor(this, R.color.status_capture)) // Rojo
 
-                // Hacemos visibles los elementos de UI
                 tvTituloAcciones.visibility = View.VISIBLE
                 btnConfirmarReal.visibility = View.VISIBLE
                 btnFalsoPositivo.visibility = View.VISIBLE
 
-                // Los habilitamos para el clic
                 btnConfirmarReal.isEnabled = true
                 btnFalsoPositivo.isEnabled = true
 
                 Toast.makeText(this, "Trampa localizada. Acciones de apertura desbloqueadas.", Toast.LENGTH_SHORT).show()
             } else {
                 tvDetalleEstado.text = "Estado: Monitoreando (Sin novedades)"
+                tvDetalleEstado.setTextColor(ContextCompat.getColor(this, R.color.status_active)) // ¡Verde!
             }
         }
 
-        // --- LOGICA DE BOTONES DE ACCIÓN DE CAMPO DE RICARDO ---
         btnConfirmarReal.setOnClickListener {
             ejecutarConfirmacionEnAzure(true, nombre)
         }
@@ -198,9 +232,14 @@ class Detalles : AppCompatActivity() {
                         val mensajeApi = if (esReal) "Marcado como CAPTURA REAL" else "Marcado como FALSO POSITIVO"
                         Toast.makeText(this@Detalles, mensajeApi, Toast.LENGTH_LONG).show()
 
-                        tvDetalleEstado.text = if (esReal) "Estado: Captura Validada" else "Estado: Falso Positivo Descartado"
+                        if (esReal) {
+                            tvDetalleEstado.text = "Estado: Captura Validada"
+                            tvDetalleEstado.setTextColor(ContextCompat.getColor(this@Detalles, R.color.status_capture))
+                        } else {
+                            tvDetalleEstado.text = "Estado: Falso Positivo Descartado"
+                            tvDetalleEstado.setTextColor(ContextCompat.getColor(this@Detalles, R.color.status_disconnected))
+                        }
 
-                        // Volvemos a ocultar el bloque completo para limpiar la interfaz tras finalizar el dictamen
                         tvTituloAcciones.visibility = View.GONE
                         btnConfirmarReal.visibility = View.GONE
                         btnFalsoPositivo.visibility = View.GONE

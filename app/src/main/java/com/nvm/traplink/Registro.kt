@@ -22,6 +22,7 @@ class Registro : AppCompatActivity() {
     private lateinit var etEmail: TextInputEditText
     private lateinit var etPassword: TextInputEditText
     private lateinit var btnRegistrar: Button
+    private lateinit var btnRegresarLogin: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,6 +38,7 @@ class Registro : AppCompatActivity() {
         etEmail = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
         btnRegistrar = findViewById(R.id.btnRegistrar)
+        btnRegresarLogin = findViewById(R.id.btnRegresarLogin)
 
         btnRegistrar.setOnClickListener {
             val nombre = etNombre.text.toString().trim()
@@ -44,25 +46,35 @@ class Registro : AppCompatActivity() {
             val password = etPassword.text.toString().trim()
 
             if (nombre.isEmpty() || email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Por favor, complete todos los campos", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Por favor, complete todos los campos", Toast.LENGTH_SHORT)
+                    .show()
             } else {
                 registroUsuario(nombre, email, password)
             }
+        }
+
+        // LÓGICA CORREGIDA: Transición instantánea idéntica al Login
+        btnRegresarLogin.setOnClickListener {
+            val intent = Intent(this@Registro, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
+
+            // Quitamos la animación brusca de Android para que combine con el Login
+            overridePendingTransition(0, 0)
+
+            finish()
         }
     }
 
     private fun registroUsuario(nom: String, em: String, pas: String) {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                // 1. Armamos el DTO de registro
                 val request = RegistroRequestDto(nombre = nom, email = em, password = pas)
-
-                // 2. Consumimos el nuevo endpoint de Azure
                 val response = RetrofitClient.authService.registrar(request)
 
                 withContext(Dispatchers.Main) {
                     if (response.isSuccessful && response.body() != null) {
-                        val mensajeServer = response.body()!!.mensaje // "Usuario registrado con éxito."
+                        val mensajeServer = response.body()!!.mensaje
                         Toast.makeText(this@Registro, mensajeServer, Toast.LENGTH_SHORT).show()
 
                         etNombre.setText("")
@@ -75,7 +87,6 @@ class Registro : AppCompatActivity() {
 
                         finish()
                     } else {
-                        // Si el correo ya existe da el Error 400 Bad Request
                         Toast.makeText(this@Registro, "Error: El correo ya está registrado u ocurrió un problema", Toast.LENGTH_LONG).show()
                     }
                 }

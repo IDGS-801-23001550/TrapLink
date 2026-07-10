@@ -1,29 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <!-- Color primario de marca: verde oliva (control de plagas / campo) -->
     <color name="primary">#3D5A40</color>
     <color name="primary_dark">#2C4230</color>
     <color name="primary_container">#D9E4D3</color>
     <color name="on_primary">#FFFFFF</color>
 
-    <!-- Secundario / acento: mostaza tierra -->
     <color name="secondary">#C98A3D</color>
     <color name="secondary_dark">#A6702E</color>
     <color name="on_secondary">#FFFFFF</color>
 
-    <!-- Fondos y superficies -->
     <color name="background">#F7F6F2</color>
     <color name="surface">#FFFFFF</color>
     <color name="surface_alt">#FBFAF7</color>
 
-    <!-- Texto -->
     <color name="text_primary">#262420</color>
     <color name="text_secondary">#5C5A54</color>
     <color name="text_hint">#9A9790</color>
     <color name="divider">#E5E2D9</color>
 
-    <!-- Estados de dispositivo / trampa -->
     <color name="status_active">#3F9142</color>
     <color name="status_active_bg">#E3F0E3</color>
 
@@ -36,9 +30,24 @@
     <color name="status_disconnected">#8A8780</color>
     <color name="status_disconnected_bg">#EAE8E3</color>
 
-    <!-- Utilitarios -->
     <color name="white">#FFFFFF</color>
     <color name="black">#262420</color>
     <color name="error">#C0432E</color>
 
+    <color name="card_stroke">#1A3D5A40</color>
+    <color name="input_bg">#F2F1EC</color>
+
+    <color name="accent_neon">#1DD1A1</color>
+    <color name="accent_neon_soft">#E1F8F0</color>
+    <color name="card_bg">#FFFFFF</color>
+    <color name="card_border">#E3E8E6</color>
+    <color name="nav_bg">#FFFFFF</color>
+    <color name="nav_icon_inactive">#9AA5A0</color>
+    <color name="text_title_dark">#132A22</color>
+    <color name="text_body_grey">#6E7871</color>
+
+    <color name="header_bg">#FFFFFF</color>
+    <color name="app_bg_light">#F7F6F2</color>
+    <color name="theme_toggle_bg">#F2F1EC</color>
+    <color name="theme_toggle_icon">#262420</color>
 </resources>
