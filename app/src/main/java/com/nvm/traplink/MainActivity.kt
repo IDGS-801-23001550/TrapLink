@@ -94,4 +94,19 @@ class MainActivity : AppCompatActivity() {
     private fun mostrarToast(context: AppCompatActivity, message: String) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
+
+    //Metodo para cerrar sesion borrando el token almacenado
+    companion object {
+        fun cerrarSesion(context: android.content.Context) {
+            // Abrimos el archivo de SharedPreferences y lo limpiamos
+            val sharedPreferences = context.getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE)
+            sharedPreferences.edit().clear().apply()
+
+            // Redirigimos a la pantalla de Login
+            val intent = Intent(context, MainActivity::class.java)
+            // Limpiamos la pila de actividades para que no pueda volver atrás al presionar el botón del celular
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            context.startActivity(intent)
+        }
+    }
 }
