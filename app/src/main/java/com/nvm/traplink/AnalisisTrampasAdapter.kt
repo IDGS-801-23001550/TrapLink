@@ -3,7 +3,9 @@ package com.nvm.traplink
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.nvm.traplink.data.FalsosPositivosResponseDto
 import java.util.Locale
@@ -11,7 +13,8 @@ import java.util.Locale
 class AnalisisTrampasAdapter(
     private val listaAnalisis: List<FalsosPositivosResponseDto>,
     private val globalesReales: Int,
-    private val globalesPendientes: Int
+    private val globalesPendientes: Int,
+    private val onNodoClick: (FalsosPositivosResponseDto) -> Unit
 ) : RecyclerView.Adapter<AnalisisTrampasAdapter.AnalisisViewHolder>() {
 
     class AnalisisViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -21,6 +24,9 @@ class AnalisisTrampasAdapter(
         val tvCapturasReales: TextView = view.findViewById(R.id.tvCapturasReales)
         val tvFalsosContador: TextView = view.findViewById(R.id.tvFalsosContador)
         val tvPendientesContador: TextView = view.findViewById(R.id.tvPendientesContador)
+        val segmentReales: View = view.findViewById(R.id.segmentReales)
+        val segmentFalsos: View = view.findViewById(R.id.segmentFalsos)
+        val segmentPendientes: View = view.findViewById(R.id.segmentPendientes)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AnalisisViewHolder {
@@ -30,6 +36,7 @@ class AnalisisTrampasAdapter(
 
     override fun onBindViewHolder(holder: AnalisisViewHolder, position: Int) {
         val item = listaAnalisis[position]
+        val context = holder.itemView.context
 
         // Solución temporal: Si solo hay un nodo (ID: 1), toma los globales directamente.
         // Si hay más, calcula de forma segura para no romper la consistencia.
@@ -42,6 +49,55 @@ class AnalisisTrampasAdapter(
         holder.tvCapturasReales.text = "Reales: $reales"
         holder.tvFalsosContador.text = "Falsos: ${item.falsosPositivos}"
         holder.tvPendientesContador.text = "Pend: $pendientes"
+
+        // ===== Chip de porcentaje con color según severidad =====
+        when {
+            item.pctFalsosPositivos < 15.0 -> {
+                holder.tvPorcentajeFalsos.setBackgroundResource(R.drawable.bg_chip_active)
+                holder.tvPorcentajeFalsos.setTextColor(ContextCompat.getColor(context, R.color.chip_text_active))
+            }
+            item.pctFalsosPositivos < 40.0 -> {
+                holder.tvPorcentajeFalsos.setBackgroundResource(R.drawable.bg_chip_battery)
+                holder.tvPorcentajeFalsos.setTextColor(ContextCompat.getColor(context, R.color.chip_text_battery))
+            }
+            else -> {
+                holder.tvPorcentajeFalsos.setBackgroundResource(R.drawable.bg_chip_capture)
+                holder.tvPorcentajeFalsos.setTextColor(ContextCompat.getColor(context, R.color.chip_text_capture))
+            }
+        }
+
+        // ===== Barra segmentada: proporción visual de reales / falsos / pendientes =====
+        val realesSeguro = reales.coerceAtLeast(0)
+        val falsosSeguro = item.falsosPositivos.coerceAtLeast(0)
+        val pendientesSeguro = pendientes.coerceAtLeast(0)
+        val totalSegmentos = realesSeguro + falsosSeguro + pendientesSeguro
+
+        if (totalSegmentos <= 0) {
+            // Sin datos suficientes: barra neutra completa
+            aplicarPeso(holder.segmentReales, 1f)
+            aplicarPeso(holder.segmentFalsos, 0f)
+            aplicarPeso(holder.segmentPendientes, 0f)
+            holder.segmentReales.setBackgroundColor(ContextCompat.getColor(context, R.color.skeleton_base))
+        } else {
+            aplicarPeso(holder.segmentReales, realesSeguro.toFloat())
+            aplicarPeso(holder.segmentFalsos, falsosSeguro.toFloat())
+            aplicarPeso(holder.segmentPendientes, pendientesSeguro.toFloat())
+            holder.segmentReales.setBackgroundColor(ContextCompat.getColor(context, R.color.status_active))
+        }
+
+        holder.itemView.setOnClickListener {
+            onNodoClick(item)
+        }
+    }
+
+    /**
+     * Ajusta el layout_weight de un segmento de la barra de progreso.
+     * Un weight de 0 colapsa el segmento a ancho 0 sin necesidad de ocultarlo.
+     */
+    private fun aplicarPeso(view: View, weight: Float) {
+        val params = view.layoutParams as LinearLayout.LayoutParams
+        params.weight = weight
+        view.layoutParams = params
     }
 
     override fun getItemCount(): Int = listaAnalisis.size

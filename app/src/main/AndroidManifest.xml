@@ -8,8 +8,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.CAMERA"/>
-
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:allowBackup="true"
@@ -20,6 +19,9 @@
         android:roundIcon="@mipmap/ic_traplink"
         android:supportsRtl="true"
         android:theme="@style/Theme.TrapLink">
+        <activity
+            android:name=".TutorialActivity"
+            android:exported="false" />
         <activity
             android:name=".Registro"
             android:exported="false" />

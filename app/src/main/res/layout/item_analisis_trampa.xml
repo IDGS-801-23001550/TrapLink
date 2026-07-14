@@ -4,42 +4,92 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
     android:background="@drawable/bg_card_node"
+    android:clickable="true"
+    android:elevation="2dp"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground"
     android:orientation="vertical"
-    android:padding="16dp"
-    android:elevation="1dp">
+    android:padding="16dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <FrameLayout
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_badge_node_icon">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_signal_node" />
+        </FrameLayout>
 
         <TextView
             android:id="@+id/tvIdDispositivo"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
             android:layout_weight="1"
             android:text="ID Dispositivo: --"
             android:textColor="@color/text_title_dark"
-            android:textSize="16sp"
+            android:textSize="15sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tvPorcentajeFalsos"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@drawable/bg_chip_capture"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp"
             android:text="0.0% Falsos"
-            android:textColor="@color/status_capture"
-            android:textSize="13sp"
+            android:textColor="@color/chip_text_capture"
+            android:textSize="11sp"
             android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Barra segmentada: proporción de reales / falsos / pendientes -->
+    <LinearLayout
+        android:id="@+id/barTrack"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_progress_track"
+        android:orientation="horizontal">
+
+        <View
+            android:id="@+id/segmentReales"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@color/status_active" />
+
+        <View
+            android:id="@+id/segmentFalsos"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0"
+            android:background="@color/status_capture" />
+
+        <View
+            android:id="@+id/segmentPendientes"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0"
+            android:background="@color/status_battery_low" />
     </LinearLayout>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/divider"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp"/>
+        android:layout_marginTop="14dp"
+        android:layout_marginBottom="14dp"
+        android:background="@color/divider" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -47,44 +97,72 @@
         android:orientation="horizontal"
         android:weightSum="4">
 
-        <TextView
-            android:id="@+id/tvTotalEventos"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Evs: 0"
-            android:textColor="@color/text_body_grey"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            android:gravity="center"
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tvCapturasReales"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Reales: 0"
-            android:textColor="@color/status_active"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            <TextView
+                android:id="@+id/tvTotalEventos"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Evs: 0"
+                android:textColor="@color/text_body_grey"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvFalsosContador"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Falsos: 0"
-            android:textColor="@color/status_capture"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            android:gravity="center"
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tvPendientesContador"
+            <TextView
+                android:id="@+id/tvCapturasReales"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Reales: 0"
+                android:textColor="@color/status_active"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Pend: 0"
-            android:textColor="#FFB300"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvFalsosContador"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Falsos: 0"
+                android:textColor="@color/status_capture"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvPendientesContador"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pend: 0"
+                android:textColor="@color/status_battery_low"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

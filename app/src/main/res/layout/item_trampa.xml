@@ -5,6 +5,7 @@
     android:layout_marginBottom="14dp"
     android:background="@drawable/bg_card_node"
     android:clickable="true"
+    android:elevation="3dp"
     android:focusable="true"
     android:foreground="?android:attr/selectableItemBackground"
     android:gravity="center_vertical"
@@ -13,19 +14,19 @@
 
     <!-- Badge circular con icono de señal -->
     <FrameLayout
-        android:layout_width="44dp"
-        android:layout_height="44dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:background="@drawable/bg_badge_node_icon">
 
         <ImageView
-            android:layout_width="22dp"
-            android:layout_height="22dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:layout_gravity="center"
             android:contentDescription="@string/cd_node_icon"
             android:src="@drawable/ic_signal_node" />
     </FrameLayout>
 
-    <!-- Nombre + estado -->
+    <!-- Nombre + estado + última actividad -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -42,29 +43,19 @@
             android:textSize="16sp"
             android:textStyle="bold" />
 
-        <LinearLayout
+        <!-- Chip de estado -->
+        <TextView
+            android:id="@+id/tvEstadoTrampa"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <View
-                android:id="@+id/vStatusDot"
-                android:layout_width="8dp"
-                android:layout_height="8dp"
-                android:layout_marginEnd="6dp"
-                android:background="@drawable/circle_status_offline" />
-
-            <TextView
-                android:id="@+id/tvEstadoTrampa"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Estado: Desconectado"
-                android:textColor="@color/text_body_grey"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-        </LinearLayout>
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_chip_offline"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="3dp"
+            android:text="Desconectado"
+            android:textColor="@color/chip_text_offline"
+            android:textSize="11sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
     <ImageView

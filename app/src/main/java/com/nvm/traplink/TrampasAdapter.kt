@@ -1,6 +1,5 @@
 package com.nvm.traplink
 
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,7 +16,6 @@ class TrampasAdapter(
     class TrampaViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvNumeroSerie: TextView = view.findViewById(R.id.tvNumeroSerie)
         val tvEstadoTrampa: TextView = view.findViewById(R.id.tvEstadoTrampa)
-        val vStatusDot: View = view.findViewById(R.id.vStatusDot) // Vinculamos el punto
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TrampaViewHolder {
@@ -27,24 +25,31 @@ class TrampasAdapter(
 
     override fun onBindViewHolder(holder: TrampaViewHolder, position: Int) {
         val trampa = listaTrampas[position]
-        holder.tvNumeroSerie.text = "Dispositivo: ${trampa.numeroSerie}"
-        holder.tvEstadoTrampa.text = "Estado: ${trampa.estado}"
-
         val context = holder.itemView.context
 
-        // Unificación de la lógica visual (Texto + Círculo)
-        if (!trampa.enLinea) {
-            // CASO 1: Desconectado (Gris)
-            holder.tvEstadoTrampa.setTextColor(ContextCompat.getColor(context, R.color.status_disconnected))
-            holder.vStatusDot.setBackgroundResource(R.drawable.circle_status_offline) // Asegura usar tu drawable gris
-        } else if (trampa.estado.contains("Captura", ignoreCase = true) || trampa.estado.contains("Alerta", ignoreCase = true)) {
-            // CASO 2: Captura / Alerta activa (Rojo)
-            holder.tvEstadoTrampa.setTextColor(ContextCompat.getColor(context, R.color.status_capture))
-            // Si tienes un drawable para círculo rojo puedes ponerlo aquí, ej: holder.vStatusDot.setBackgroundResource(R.drawable.circle_status_capture)
-        } else {
-            // CASO 3: Conectado / Monitoreando normal (Verde)
-            holder.tvEstadoTrampa.setTextColor(ContextCompat.getColor(context, R.color.status_active))
-            // Si tienes un drawable para círculo verde, ej: holder.vStatusDot.setBackgroundResource(R.drawable.circle_status_online)
+        holder.tvNumeroSerie.text = trampa.numeroSerie
+
+        when {
+            !trampa.enLinea -> {
+                holder.tvEstadoTrampa.text = "Desconectado"
+                holder.tvEstadoTrampa.setBackgroundResource(R.drawable.bg_chip_offline)
+                holder.tvEstadoTrampa.setTextColor(ContextCompat.getColor(context, R.color.chip_text_offline))
+            }
+            trampa.estado.contains("Captura", ignoreCase = true) || trampa.estado.contains("Alerta", ignoreCase = true) -> {
+                holder.tvEstadoTrampa.text = "Captura detectada"
+                holder.tvEstadoTrampa.setBackgroundResource(R.drawable.bg_chip_capture)
+                holder.tvEstadoTrampa.setTextColor(ContextCompat.getColor(context, R.color.chip_text_capture))
+            }
+            trampa.estado.contains("Batería", ignoreCase = true) || trampa.estado.contains("Bateria", ignoreCase = true) -> {
+                holder.tvEstadoTrampa.text = "Batería baja"
+                holder.tvEstadoTrampa.setBackgroundResource(R.drawable.bg_chip_battery)
+                holder.tvEstadoTrampa.setTextColor(ContextCompat.getColor(context, R.color.chip_text_battery))
+            }
+            else -> {
+                holder.tvEstadoTrampa.text = "Activo"
+                holder.tvEstadoTrampa.setBackgroundResource(R.drawable.bg_chip_active)
+                holder.tvEstadoTrampa.setTextColor(ContextCompat.getColor(context, R.color.chip_text_active))
+            }
         }
 
         holder.itemView.setOnClickListener { onTrampaClick(trampa) }

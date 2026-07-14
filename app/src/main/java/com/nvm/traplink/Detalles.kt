@@ -1,14 +1,18 @@
 package com.nvm.traplink
 
 import android.Manifest
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
+import android.view.animation.LinearInterpolator
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -32,9 +36,14 @@ class Detalles : AppCompatActivity() {
     private var tieneAlertaActiva: Boolean = false
 
     private lateinit var tvDetalleEstado: TextView
-    private lateinit var tvTituloAcciones: TextView
+    private lateinit var cardAccionesCampo: LinearLayout
     private lateinit var btnConfirmarReal: Button
     private lateinit var btnFalsoPositivo: Button
+
+    // Vistas del ícono hero con pulso (ringDetalleOuter/Inner)
+    private lateinit var ringDetalleOuter: View
+    private lateinit var ringDetalleInner: View
+    private var pulsoAnimators: List<AnimatorSet> = emptyList()
 
     // Instancia de SharedPreferences compartida con el archivo centralizado
     private val prefs by lazy { getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE) }
@@ -75,21 +84,27 @@ class Detalles : AppCompatActivity() {
 
         // 3. Botón de retroceso a Inicio
         findViewById<FrameLayout>(R.id.btnAtras).setOnClickListener {
-            finish() // Finaliza esta actividad de subpestaña y regresa de forma limpia
+            finish()
         }
 
         // Vincular vistas restantes
+        val tvHeaderTitulo = findViewById<TextView>(R.id.tvHeaderTitulo)
         val tvDetalleNombre = findViewById<TextView>(R.id.tvDetalleNombre)
-        tvDetalleEstado = findViewById<TextView>(R.id.tvDetalleEstado)
+        tvDetalleEstado = findViewById(R.id.tvDetalleEstado)
         val tvDetalleBateria = findViewById<TextView>(R.id.tvDetalleBateria)
         val tvDetallePrediccion = findViewById<TextView>(R.id.tvDetallePrediccion)
+        val skeletonBateria = findViewById<View>(R.id.skeletonBateria)
+        val skeletonPrediccion = findViewById<View>(R.id.skeletonPrediccion)
 
         val btnLocalizar = findViewById<Button>(R.id.btnLocalizar)
         val btnDetener = findViewById<Button>(R.id.btnDetener)
 
-        tvTituloAcciones = findViewById<TextView>(R.id.tvTituloAcciones)
-        btnConfirmarReal = findViewById<Button>(R.id.btnConfirmarReal)
-        btnFalsoPositivo = findViewById<Button>(R.id.btnFalsoPositivo)
+        cardAccionesCampo = findViewById(R.id.cardAccionesCampo)
+        btnConfirmarReal = findViewById(R.id.btnConfirmarReal)
+        btnFalsoPositivo = findViewById(R.id.btnFalsoPositivo)
+
+        ringDetalleOuter = findViewById(R.id.ringDetalleOuter)
+        ringDetalleInner = findViewById(R.id.ringDetalleInner)
 
         // Recuperar Token utilizando la referencia lazy unificada
         tokenGuardado = prefs.getString("AUTH_TOKEN", "") ?: ""
@@ -100,12 +115,16 @@ class Detalles : AppCompatActivity() {
         val nombre = intent.getStringExtra("EXTRA_NOMBRE") ?: "Dispositivo"
         val estadoBase = intent.getStringExtra("EXTRA_ESTADO") ?: "Monitoreando"
 
+        tvHeaderTitulo.text = nombre
         tvDetalleNombre.text = nombre
-        tvDetalleBateria.text = "Carga Física: Cargando..."
-        tvDetallePrediccion.text = "Vida útil estimada: Cargando..."
+
+        iniciarShimmerSkeleton(skeletonBateria)
+        iniciarShimmerSkeleton(skeletonPrediccion)
+        animarEntradaDetalles()
 
         btnConfirmarReal.isEnabled = false
         btnFalsoPositivo.isEnabled = false
+        cardAccionesCampo.visibility = View.GONE
 
         // Consumir APIs con validación de color dinámico
         if (dispositivoId != -1 && tokenGuardado.isNotEmpty()) {
@@ -113,21 +132,30 @@ class Detalles : AppCompatActivity() {
                 try {
                     val responsePred = RetrofitClient.trapLinkService.getPrediccionesPorDispositivo(tokenCompleto, dispositivoId)
                     withContext(Dispatchers.Main) {
+                        detenerShimmerSkeleton(skeletonBateria)
+                        detenerShimmerSkeleton(skeletonPrediccion)
+                        tvDetalleBateria.visibility = View.VISIBLE
+                        tvDetallePrediccion.visibility = View.VISIBLE
+
                         if (responsePred.isSuccessful && !responsePred.body().isNullOrEmpty()) {
                             val ultimaPrediccion = responsePred.body()!!.first()
                             val horasRestantes = ultimaPrediccion.horasBateriaEstimada ?: 0.0
                             val estadoPredicho = ultimaPrediccion.clasePredicha ?: "Estable"
-                            tvDetalleBateria.text = "Carga Física: Restan aprox. ${horasRestantes.toInt()} horas"
-                            tvDetallePrediccion.text = "Vida útil estimada: $estadoPredicho"
+                            tvDetalleBateria.text = "Restan ${horasRestantes.toInt()}h"
+                            tvDetallePrediccion.text = estadoPredicho
                         } else {
-                            tvDetalleBateria.text = "Carga Física: 100%"
-                            tvDetallePrediccion.text = "Vida útil estimada: Estable"
+                            tvDetalleBateria.text = "100%"
+                            tvDetallePrediccion.text = "Estable"
                         }
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
-                        tvDetalleBateria.text = "Carga Física: No disponible"
-                        tvDetallePrediccion.text = "Vida útil estimada: Error"
+                        detenerShimmerSkeleton(skeletonBateria)
+                        detenerShimmerSkeleton(skeletonPrediccion)
+                        tvDetalleBateria.visibility = View.VISIBLE
+                        tvDetallePrediccion.visibility = View.VISIBLE
+                        tvDetalleBateria.text = "No disponible"
+                        tvDetallePrediccion.text = "Error"
                     }
                 }
 
@@ -135,14 +163,10 @@ class Detalles : AppCompatActivity() {
                 try {
                     if (estadoBase.equals("Desconectado", ignoreCase = true) || estadoBase.equals("Offline", ignoreCase = true)) {
                         withContext(Dispatchers.Main) {
-                            tvDetalleEstado.text = "Estado: Desconectada"
-                            // Cambiado a Gris Semántico de tus recursos para concordar con item_trampa
-                            tvDetalleEstado.setTextColor(ContextCompat.getColor(this@Detalles, R.color.status_disconnected))
+                            actualizarEstadoChip("Desconectada", R.drawable.bg_chip_offline, R.color.chip_text_offline)
                             tieneAlertaActiva = false
-
-                            tvTituloAcciones.visibility = View.GONE
-                            btnConfirmarReal.visibility = View.GONE
-                            btnFalsoPositivo.visibility = View.GONE
+                            cardAccionesCampo.visibility = View.GONE
+                            detenerPulso()
                         }
                     } else {
                         val responseEv = RetrofitClient.trapLinkService.getEventosPendientes(tokenCompleto)
@@ -154,20 +178,18 @@ class Detalles : AppCompatActivity() {
 
                                 if (eventoDeEstaTrampa != null) {
                                     eventoPendienteId = eventoDeEstaTrampa.eventoID
-                                    tvDetalleEstado.text = "Estado: Alerta Activa (Falta Localizar)"
-                                    // Rojo de captura
-                                    tvDetalleEstado.setTextColor(ContextCompat.getColor(this@Detalles, R.color.status_capture))
+                                    actualizarEstadoChip("Alerta Activa (Falta Localizar)", R.drawable.bg_chip_capture, R.color.chip_text_capture)
                                     tieneAlertaActiva = true
+                                    iniciarPulso()
                                 } else {
-                                    tvDetalleEstado.text = "Estado: Monitoreando (Sin novedades)"
-                                    // Verde activo
-                                    tvDetalleEstado.setTextColor(ContextCompat.getColor(this@Detalles, R.color.status_active))
+                                    actualizarEstadoChip("Monitoreando (Sin novedades)", R.drawable.bg_chip_active, R.color.chip_text_active)
                                     tieneAlertaActiva = false
+                                    detenerPulso()
                                 }
                             } else {
-                                tvDetalleEstado.text = "Estado: Monitoreando (Sin novedades)"
-                                tvDetalleEstado.setTextColor(ContextCompat.getColor(this@Detalles, R.color.status_active))
+                                actualizarEstadoChip("Monitoreando (Sin novedades)", R.drawable.bg_chip_active, R.color.chip_text_active)
                                 tieneAlertaActiva = false
+                                detenerPulso()
                             }
                         }
                     }
@@ -180,28 +202,24 @@ class Detalles : AppCompatActivity() {
         // Manejo de Comandos WS
         btnLocalizar.setOnClickListener {
             enviarComandoWebSocket(nombre, "LOCALIZAR")
-            tvDetalleEstado.text = "Estado: Localizando dispositivo en campo..."
-            tvDetalleEstado.setTextColor(ContextCompat.getColor(this, R.color.secondary))
+            actualizarEstadoChip("Localizando dispositivo en campo...", R.drawable.bg_chip_battery, R.color.chip_text_battery)
+            iniciarPulso()
         }
 
         btnDetener.setOnClickListener {
             enviarComandoWebSocket(nombre, "DETENER_LOCALIZAR")
 
             if (tieneAlertaActiva) {
-                tvDetalleEstado.text = "Estado: Alerta Activa (Pendiente de Revisión)"
-                tvDetalleEstado.setTextColor(ContextCompat.getColor(this, R.color.status_capture)) // Rojo
+                actualizarEstadoChip("Alerta Activa (Pendiente de Revisión)", R.drawable.bg_chip_capture, R.color.chip_text_capture)
 
-                tvTituloAcciones.visibility = View.VISIBLE
-                btnConfirmarReal.visibility = View.VISIBLE
-                btnFalsoPositivo.visibility = View.VISIBLE
-
+                cardAccionesCampo.visibility = View.VISIBLE
                 btnConfirmarReal.isEnabled = true
                 btnFalsoPositivo.isEnabled = true
 
                 Toast.makeText(this, "Trampa localizada. Acciones de apertura desbloqueadas.", Toast.LENGTH_SHORT).show()
             } else {
-                tvDetalleEstado.text = "Estado: Monitoreando (Sin novedades)"
-                tvDetalleEstado.setTextColor(ContextCompat.getColor(this, R.color.status_active)) // ¡Verde!
+                actualizarEstadoChip("Monitoreando (Sin novedades)", R.drawable.bg_chip_active, R.color.chip_text_active)
+                detenerPulso()
             }
         }
 
@@ -212,6 +230,16 @@ class Detalles : AppCompatActivity() {
         btnFalsoPositivo.setOnClickListener {
             ejecutarConfirmacionEnAzure(false, nombre)
         }
+    }
+
+    /**
+     * Actualiza el chip de estado (texto + fondo + color de texto) en una sola llamada,
+     * reutilizando los mismos drawables/colores de chip que ya usa item_trampa.
+     */
+    private fun actualizarEstadoChip(texto: String, bgRes: Int, colorRes: Int) {
+        tvDetalleEstado.text = texto
+        tvDetalleEstado.setBackgroundResource(bgRes)
+        tvDetalleEstado.setTextColor(ContextCompat.getColor(this, colorRes))
     }
 
     private fun ejecutarConfirmacionEnAzure(esReal: Boolean, nombreDispositivo: String) {
@@ -233,20 +261,16 @@ class Detalles : AppCompatActivity() {
                         Toast.makeText(this@Detalles, mensajeApi, Toast.LENGTH_LONG).show()
 
                         if (esReal) {
-                            tvDetalleEstado.text = "Estado: Captura Validada"
-                            tvDetalleEstado.setTextColor(ContextCompat.getColor(this@Detalles, R.color.status_capture))
+                            actualizarEstadoChip("Captura Validada", R.drawable.bg_chip_capture, R.color.chip_text_capture)
                         } else {
-                            tvDetalleEstado.text = "Estado: Falso Positivo Descartado"
-                            tvDetalleEstado.setTextColor(ContextCompat.getColor(this@Detalles, R.color.status_disconnected))
+                            actualizarEstadoChip("Falso Positivo Descartado", R.drawable.bg_chip_offline, R.color.chip_text_offline)
                         }
 
-                        tvTituloAcciones.visibility = View.GONE
-                        btnConfirmarReal.visibility = View.GONE
-                        btnFalsoPositivo.visibility = View.GONE
-
+                        cardAccionesCampo.visibility = View.GONE
                         btnConfirmarReal.isEnabled = false
                         btnFalsoPositivo.isEnabled = false
                         tieneAlertaActiva = false
+                        detenerPulso()
 
                         enviarComandoWebSocket(nombreDispositivo, "RESET_TRAMPA")
                     } else {
@@ -259,6 +283,106 @@ class Detalles : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    // ===================== SKELETON LOADER (tiles de info) =====================
+
+    /**
+     * Aplica un shimmer (pulso de opacidad en loop) a cualquier View skeleton
+     * mientras se espera la respuesta del API. Reutilizable para ambos tiles.
+     */
+    private fun iniciarShimmerSkeleton(view: View) {
+        view.animate()
+            .alpha(0.4f)
+            .setDuration(700)
+            .withEndAction {
+                if (view.visibility == View.VISIBLE) {
+                    view.animate()
+                        .alpha(1f)
+                        .setDuration(700)
+                        .withEndAction { iniciarShimmerSkeleton(view) }
+                        .start()
+                }
+            }
+            .start()
+    }
+
+    private fun detenerShimmerSkeleton(view: View) {
+        view.animate().cancel()
+        view.visibility = View.GONE
+        view.alpha = 1f
+    }
+
+    // ===================== ANIMACIÓN DE ENTRADA (hero card + tiles) =====================
+
+    /**
+     * Anima la tarjeta hero y los tiles de info con fade + slide sutil al
+     * abrir la pantalla, para que no aparezcan "de golpe".
+     */
+    private fun animarEntradaDetalles() {
+        val heroCard = findViewById<View>(R.id.heroCard)
+        val infoTilesRow = findViewById<View>(R.id.infoTilesRow)
+
+        listOf(heroCard, infoTilesRow).forEachIndexed { index, view ->
+            view.alpha = 0f
+            view.translationY = 30f
+            view.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(350)
+                .setStartDelay((index * 100).toLong())
+                .start()
+        }
+    }
+
+    // ===================== PULSO DEL ÍCONO HERO (alerta activa / localizando) =====================
+
+    private fun iniciarPulso() {
+        detenerPulso() // evita solapar animadores si ya estaba corriendo
+
+        ringDetalleOuter.visibility = View.VISIBLE
+        ringDetalleInner.visibility = View.VISIBLE
+
+        val rings = listOf(ringDetalleOuter, ringDetalleInner)
+        val delays = listOf(0L, 500L)
+
+        pulsoAnimators = rings.mapIndexed { index, ring ->
+            ring.scaleX = 0.5f
+            ring.scaleY = 0.5f
+            ring.alpha = 0f
+
+            val scaleX = ObjectAnimator.ofFloat(ring, "scaleX", 0.5f, 1f)
+            val scaleY = ObjectAnimator.ofFloat(ring, "scaleY", 0.5f, 1f)
+            val alpha = ObjectAnimator.ofFloat(ring, "alpha", 0.6f, 0f)
+
+            AnimatorSet().apply {
+                playTogether(scaleX, scaleY, alpha)
+                duration = 1400
+                startDelay = delays[index]
+                interpolator = LinearInterpolator()
+                addListener(object : android.animation.AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: android.animation.Animator) {
+                        if (ringDetalleOuter.visibility == View.VISIBLE) {
+                            start()
+                        }
+                    }
+                })
+                start()
+            }
+        }
+    }
+
+    private fun detenerPulso() {
+        pulsoAnimators.forEach { it.cancel() }
+        if (::ringDetalleOuter.isInitialized) {
+            ringDetalleOuter.visibility = View.INVISIBLE
+            ringDetalleInner.visibility = View.INVISIBLE
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        detenerPulso()
     }
 
     private fun enviarComandoWebSocket(targetId: String, comando: String) {

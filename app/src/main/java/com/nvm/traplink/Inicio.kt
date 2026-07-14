@@ -6,21 +6,27 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.VideoView
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.cardview.widget.CardView
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -35,6 +41,23 @@ class Inicio : AppCompatActivity() {
     private val CHANNEL_ID = "trap_alerts_channel"
     private lateinit var rvDispositivos: RecyclerView
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+
+    private lateinit var tvStatTotal: TextView
+    private lateinit var tvStatActivos: TextView
+    private lateinit var tvStatAlertas: TextView
+    private lateinit var emptyState: NestedScrollView
+    //private lateinit var fabVincular: FrameLayout
+
+    // Vistas del video preview (autoplay, silenciado, en loop)
+    private lateinit var cardVideoPreview: CardView
+    private lateinit var videoPreview: VideoView
+    private lateinit var btnSonidoPreview: FrameLayout
+    private lateinit var ivIconoSonido: ImageView
+    private var mediaPlayerPreview: android.media.MediaPlayer? = null
+    private var sonidoActivado = false
+    private var yaSeAnimaronStats = false
+    private var primeraCargaCompleta = false
+    private lateinit var skeletonContainer: LinearLayout
 
     // SharedPreferences para guardar la preferencia del tema
     private val prefs by lazy { getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE) }
@@ -74,10 +97,8 @@ class Inicio : AppCompatActivity() {
         val ivToggleIcon = findViewById<ImageView>(R.id.ivToggleTemaIcon)
         val btnToggleTema = findViewById<FrameLayout>(R.id.btnToggleTema)
 
-        // Asignar el icono correspondiente según el estado actual al iniciar
         ivToggleIcon.setImageResource(if (isDark) R.drawable.ic_sun else R.drawable.ic_moon)
 
-        // Listener para el botón de cambio de tema
         btnToggleTema.setOnClickListener {
             val nuevoModoOscuro = !prefs.getBoolean("dark_mode", false)
             prefs.edit().putBoolean("dark_mode", nuevoModoOscuro).apply()
@@ -86,7 +107,6 @@ class Inicio : AppCompatActivity() {
                 if (nuevoModoOscuro) AppCompatDelegate.MODE_NIGHT_YES
                 else AppCompatDelegate.MODE_NIGHT_NO
             )
-            // Recrea la Activity para aplicar de inmediato los recursos de values-night
             recreate()
         }
 
@@ -97,6 +117,47 @@ class Inicio : AppCompatActivity() {
 
         val btnNavEventos = findViewById<TextView>(R.id.btnNavEventos)
         val btnNavVincular = findViewById<TextView>(R.id.btnNavVincular)
+
+        // Inicialización de las vistas del header/estadísticas/estado vacío
+        tvStatTotal = findViewById(R.id.tvStatTotal)
+        tvStatActivos = findViewById(R.id.tvStatActivos)
+        tvStatAlertas = findViewById(R.id.tvStatAlertas)
+        emptyState = findViewById(R.id.emptyState)
+        //fabVincular = findViewById(R.id.fabVincular)
+
+        // Skeleton loader: se muestra mientras llega la primera respuesta del API
+        skeletonContainer = findViewById(R.id.skeletonContainer)
+        iniciarShimmer()
+
+        // ===== Video preview autoplay dentro del estado vacío =====
+        cardVideoPreview = findViewById(R.id.cardVideoPreview)
+        videoPreview = findViewById(R.id.videoPreview)
+        btnSonidoPreview = findViewById(R.id.btnSonidoPreview)
+        ivIconoSonido = findViewById(R.id.ivIconoSonido)
+
+        configurarVideoPreview()
+
+        // Tocar el video (o la tarjeta completa) abre la versión completa con sonido y controles
+        cardVideoPreview.setOnClickListener {
+            startActivity(Intent(this, TutorialActivity::class.java))
+        }
+
+        // Botón de bocina: activa/desactiva el sonido del preview sin salir de la pantalla
+        btnSonidoPreview.setOnClickListener {
+            sonidoActivado = !sonidoActivado
+            val volumen = if (sonidoActivado) 1f else 0f
+            mediaPlayerPreview?.setVolume(volumen, volumen)
+            ivIconoSonido.setImageResource(
+                if (sonidoActivado) R.drawable.ic_volume_up else R.drawable.ic_volume_off
+            )
+        }
+
+        /*fabVincular.setOnClickListener {
+            val intent = Intent(this, VincularActivity::class.java)
+            startActivity(intent)
+            overridePendingTransition(0, 0)
+            finish()
+        }*/
 
         cargarDispositivosDesdeAzure()
 
@@ -122,7 +183,6 @@ class Inicio : AppCompatActivity() {
     private fun cargarDispositivosDesdeAzure() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                // Reutilizamos el mismo archivo "TrapLinkPrefs" que ya lee el token
                 val tokenGuardado = prefs.getString("AUTH_TOKEN", "") ?: ""
 
                 if (tokenGuardado.isEmpty()) {
@@ -139,8 +199,37 @@ class Inicio : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     swipeRefreshLayout.isRefreshing = false
 
+                    // Ocultar el skeleton loader apenas llega la primera respuesta (éxito o error)
+                    if (!primeraCargaCompleta) {
+                        detenerShimmer()
+                        skeletonContainer.visibility = View.GONE
+                        swipeRefreshLayout.visibility = View.VISIBLE
+                        primeraCargaCompleta = true
+                    }
+
                     if (response.isSuccessful && response.body() != null) {
                         val listaTrampas = response.body()!!
+
+                        // Actualizar estadísticas
+                        tvStatTotal.text = listaTrampas.size.toString()
+                        tvStatActivos.text = listaTrampas.count { it.estado.contains("Activ", ignoreCase = true) }.toString()
+                        tvStatAlertas.text = listaTrampas.count { it.estado.contains("Captura", ignoreCase = true) }.toString()
+
+                        if (!yaSeAnimaronStats) {
+                            animarEntradaStats()
+                            yaSeAnimaronStats = true
+                        }
+
+                        // Mostrar estado vacío (con video preview autoplay) si no hay dispositivos
+                        if (listaTrampas.isEmpty()) {
+                            emptyState.visibility = View.VISIBLE
+                            rvDispositivos.visibility = View.GONE
+                            reanudarVideoPreview()
+                        } else {
+                            emptyState.visibility = View.GONE
+                            rvDispositivos.visibility = View.VISIBLE
+                            pausarVideoPreview()
+                        }
 
                         listaTrampas.forEach { trampa ->
                             if (trampa.estado.contains("Captura", ignoreCase = true)) {
@@ -157,6 +246,8 @@ class Inicio : AppCompatActivity() {
                             startActivity(intent)
                         }
 
+                        // Anima la entrada de cada tarjeta de dispositivo (fade + slide escalonado)
+                        rvDispositivos.scheduleLayoutAnimation()
                     } else {
                         val codigoError = response.code()
                         val mensajeError = response.errorBody()?.string() ?: "Sin mensaje"
@@ -166,11 +257,120 @@ class Inicio : AppCompatActivity() {
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     swipeRefreshLayout.isRefreshing = false
+                    if (!primeraCargaCompleta) {
+                        detenerShimmer()
+                        skeletonContainer.visibility = View.GONE
+                        swipeRefreshLayout.visibility = View.VISIBLE
+                        primeraCargaCompleta = true
+                    }
                     Toast.makeText(this@Inicio, "Error de conexión en Nodos: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }
     }
+
+    // ===================== SKELETON LOADER (primera carga) =====================
+
+    /**
+     * Aplica un efecto shimmer (pulso de opacidad en loop) al contenedor
+     * skeleton mientras se espera la primera respuesta del API.
+     */
+    private fun iniciarShimmer() {
+        skeletonContainer.animate()
+            .alpha(0.4f)
+            .setDuration(700)
+            .withEndAction {
+                if (skeletonContainer.visibility == View.VISIBLE) {
+                    skeletonContainer.animate()
+                        .alpha(1f)
+                        .setDuration(700)
+                        .withEndAction { iniciarShimmer() }
+                        .start()
+                }
+            }
+            .start()
+    }
+
+    private fun detenerShimmer() {
+        skeletonContainer.animate().cancel()
+        skeletonContainer.alpha = 1f
+    }
+
+    // ===================== ANIMACIÓN DE ENTRADA (tarjetas de estadísticas) =====================
+
+    /**
+     * Anima las 3 tarjetas de estadísticas (Total/Activos/Alertas) con un
+     * fade + slide sutil y escalonado, para que se sientan "vivas" al cargar
+     * en vez de aparecer de golpe.
+     */
+    private fun animarEntradaStats() {
+        val statsRow = findViewById<android.widget.LinearLayout>(R.id.statsRow)
+        for (i in 0 until statsRow.childCount) {
+            val card = statsRow.getChildAt(i)
+            card.alpha = 0f
+            card.translationY = 24f
+            card.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(350)
+                .setStartDelay((i * 90).toLong())
+                .start()
+        }
+    }
+
+    // ===================== VIDEO PREVIEW AUTOPLAY (estado vacío) =====================
+
+    /**
+     * Configura el VideoView del estado vacío para que arranque solo, en loop y
+     * silenciado apenas el video termina de prepararse (sin esperar ningún tap).
+     * Requiere el archivo res/raw/tutorial_vincular.mp4
+     */
+    private fun configurarVideoPreview() {
+        try {
+            val uri = Uri.parse("android.resource://$packageName/${R.raw.tutorial_vincular}")
+            videoPreview.setVideoURI(uri)
+
+            videoPreview.setOnPreparedListener { mp ->
+                mediaPlayerPreview = mp
+                mp.isLooping = true
+                mp.setVolume(0f, 0f) // arranca silenciado, como un preview de Instagram/TikTok
+                videoPreview.start()
+            }
+
+            // Si por alguna razón el video no puede reproducirse, no truena la pantalla,
+            // simplemente no se muestra el preview.
+            videoPreview.setOnErrorListener { _, _, _ -> true }
+
+        } catch (e: Exception) {
+            // Silenciosamente ignoramos el error del preview; el resto del onboarding sigue funcionando
+        }
+    }
+
+    private fun reanudarVideoPreview() {
+        if (::videoPreview.isInitialized && !videoPreview.isPlaying) {
+            videoPreview.start()
+        }
+    }
+
+    private fun pausarVideoPreview() {
+        if (::videoPreview.isInitialized && videoPreview.isPlaying) {
+            videoPreview.pause()
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        pausarVideoPreview()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::emptyState.isInitialized && emptyState.visibility == View.VISIBLE) {
+            reanudarVideoPreview()
+        }
+    }
+
+    // ===================== NOTIFICACIONES =====================
 
     private fun checkNotificationPermission(){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
