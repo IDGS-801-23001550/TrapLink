@@ -19,4 +19,15 @@
     <!-- Estados -->
     <color name="status_disconnected">#5C6678</color>
 
+    <color name="header_gradient_start">#0B1220</color>
+    <color name="header_gradient_end">#16342A</color>
+    <color name="stat_card_bg">#161D2E</color>
+    <color name="shadow_soft">#33000000</color>
+
+    <color name="timeline_line">#232C42</color>
+
+    <color name="skeleton_base">#232C42</color>
+
+    <color name="input_bg">#161D2E</color>
+
 </resources>

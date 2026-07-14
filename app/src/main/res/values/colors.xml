@@ -50,4 +50,33 @@
     <color name="app_bg_light">#F7F6F2</color>
     <color name="theme_toggle_bg">#F2F1EC</color>
     <color name="theme_toggle_icon">#262420</color>
+
+    <!-- Gradiente header -->
+    <color name="header_gradient_start">#1B4332</color>
+    <color name="header_gradient_end">#2D6A4F</color>
+
+    <!-- Stat cards -->
+    <color name="stat_card_bg">#FFFFFF</color>
+    <color name="stat_total">#3D5A40</color>
+    <color name="stat_active">#1DD1A1</color>
+    <color name="stat_alert">#C0432E</color>
+
+    <!-- FAB -->
+    <color name="fab_start">#1DD1A1</color>
+    <color name="fab_end">#17A589</color>
+
+    <!-- Sombra suave para tarjetas -->
+    <color name="shadow_soft">#1A000000</color>
+
+    <!-- Texto de chips (usa los status_* que ya existen para el fondo) -->
+    <color name="chip_text_active">#1B7A3D</color>
+    <color name="chip_text_capture">#B23A24</color>
+    <color name="chip_text_battery">#B87A0E</color>
+    <color name="chip_text_offline">#6B6B66</color>
+
+    <color name="radar_ring">#1DD1A1</color>
+    <color name="timeline_line">#D9E4D3</color>
+
+
+    <color name="skeleton_base">#E5E2D9</color>
 </resources>

@@ -1,175 +1,366 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
+    android:id="@+id/scrollDetalles"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/app_bg_light"
+    android:fillViewport="true"
     tools:context=".Detalles">
 
-    <!-- Header Dinámico con botón Atrás -->
-    <LinearLayout
-        android:id="@+id/headerContainer"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:background="@drawable/bg_header"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="20dp"
-        android:paddingVertical="16dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
-        <!-- Botón Atrás sustituyendo al badge del logo -->
-        <FrameLayout
-            android:id="@+id/btnAtras"
-            android:layout_width="34dp"
-            android:layout_height="34dp"
-            android:background="@drawable/bg_badge_logo"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?android:attr/selectableItemBackgroundBorderless">
-
-            <ImageView
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_back" />
-        </FrameLayout>
-
-        <TextView
-            android:id="@+id/tvHeaderTitulo"
+        <!-- ===================== HEADER CON GRADIENTE ===================== -->
+        <LinearLayout
+            android:id="@+id/headerContainer"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_weight="1"
-            android:text="@string/app_name"
-            android:textColor="@color/text_title_dark"
-            android:textSize="19sp"
-            android:textStyle="bold" />
+            android:background="@drawable/bg_header_gradient"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="20dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="24dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
-        <!-- Toggle de Tema -->
-        <FrameLayout
-            android:id="@+id/btnToggleTema"
-            android:layout_width="34dp"
-            android:layout_height="34dp"
-            android:background="@drawable/bg_theme_toggle"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?android:attr/selectableItemBackgroundBorderless">
+            <FrameLayout
+                android:id="@+id/btnAtras"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:background="@drawable/bg_theme_toggle"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackgroundBorderless">
 
-            <ImageView
-                android:id="@+id/ivToggleTemaIcon"
-                android:layout_width="18dp"
-                android:layout_height="18dp"
-                android:layout_gravity="center"
-                android:contentDescription="@string/cd_toggle_theme"
-                android:src="@drawable/ic_moon" />
-        </FrameLayout>
-    </LinearLayout>
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_back"
+                    app:tint="#FFFFFF" />
+            </FrameLayout>
 
-    <!-- Contenedor de Información Adaptable -->
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="20dp"
-        android:background="@drawable/bg_card_node"
-        android:orientation="vertical"
-        android:padding="20dp"
-        android:elevation="2dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/headerContainer">
+            <TextView
+                android:id="@+id/tvHeaderTitulo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/app_name"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/tvDetalleNombre"
-            android:layout_width="wrap_content"
+            <FrameLayout
+                android:id="@+id/btnToggleTema"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:background="@drawable/bg_theme_toggle"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackgroundBorderless">
+
+                <ImageView
+                    android:id="@+id/ivToggleTemaIcon"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/cd_toggle_theme"
+                    android:src="@drawable/ic_moon" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <!-- ===================== TARJETA HERO (ícono + nombre + chip de estado) ===================== -->
+        <LinearLayout
+            android:id="@+id/heroCard"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="-28dp"
+            android:background="@drawable/bg_card_node"
+            android:elevation="6dp"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingVertical="26dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/headerContainer">
+
+            <!-- Ícono del dispositivo con anillos pulsantes (solo visibles con alerta/localizando) -->
+            <FrameLayout
+                android:layout_width="110dp"
+                android:layout_height="110dp">
+
+                <View
+                    android:id="@+id/ringDetalleOuter"
+                    android:layout_width="110dp"
+                    android:layout_height="110dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/ring_pulse"
+                    android:visibility="invisible" />
+
+                <View
+                    android:id="@+id/ringDetalleInner"
+                    android:layout_width="110dp"
+                    android:layout_height="110dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/ring_pulse"
+                    android:visibility="invisible" />
+
+                <FrameLayout
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bg_radar_center"
+                    android:elevation="4dp">
+
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_signal_node"
+                        app:tint="#FFFFFF" />
+                </FrameLayout>
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/tvDetalleNombre"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:textColor="@color/text_title_dark"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                tools:text="Nombre del Nodo" />
+
+            <!-- Chip de estado -->
+            <TextView
+                android:id="@+id/tvDetalleEstado"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_chip_offline"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="6dp"
+                android:text="Estado: -"
+                android:textColor="@color/chip_text_offline"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- ===================== TILES DE INFO (Batería / Vida útil) ===================== -->
+        <LinearLayout
+            android:id="@+id/infoTilesRow"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="14dp"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/heroCard">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_stat_card"
+                android:elevation="2dp"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_battery_icon" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Carga física"
+                    android:textColor="@color/text_body_grey"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/tvDetalleBateria"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Cargando..."
+                    android:textColor="@color/text_title_dark"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+                <View
+                    android:id="@+id/skeletonBateria"
+                    android:layout_width="70dp"
+                    android:layout_height="16dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/bg_skeleton_block" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/bg_stat_card"
+                android:elevation="2dp"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_life_estimate" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Vida útil estimada"
+                    android:textColor="@color/text_body_grey"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/tvDetallePrediccion"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Cargando..."
+                    android:textColor="@color/text_title_dark"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+                <View
+                    android:id="@+id/skeletonPrediccion"
+                    android:layout_width="70dp"
+                    android:layout_height="16dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/bg_skeleton_block" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ===================== BOTONES DE LOCALIZACIÓN ===================== -->
+        <TextView
+            android:id="@+id/tvTituloLocalizacion"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="26dp"
+            android:text="Localización"
             android:textColor="@color/text_title_dark"
-            android:textSize="20sp"
+            android:textSize="15sp"
             android:textStyle="bold"
-            tools:text="Nombre del Nodo" />
-
-        <TextView
-            android:id="@+id/tvDetalleEstado"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="Estado: -"
-            android:textColor="@color/text_body_grey"
-            android:textSize="15sp" />
-
-        <TextView
-            android:id="@+id/tvDetalleBateria"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Carga Física: -"
-            android:textColor="@color/text_body_grey"
-            android:textSize="14sp" />
-
-        <TextView
-            android:id="@+id/tvDetallePrediccion"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Vida útil estimada: -"
-            android:textColor="@color/secondary"
-            android:textSize="14sp"
-            android:textStyle="bold" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/divider"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="20dp"/>
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/infoTilesRow" />
 
         <Button
             android:id="@+id/btnLocalizar"
             style="@style/Widget.TrapLink.Button.Secondary"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:text="Localizar Dispositivo" />
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="10dp"
+            android:drawableStart="@drawable/ic_location_pin"
+            android:drawablePadding="8dp"
+            android:drawableTint="#FFFFFF"
+            android:text="Localizar Dispositivo"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvTituloLocalizacion" />
 
         <Button
             android:id="@+id/btnDetener"
             style="@style/Widget.TrapLink.Button.Secondary"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:text="Detener Localización" />
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="12dp"
+            android:drawableStart="@drawable/ic_stop_circle"
+            android:drawablePadding="8dp"
+            android:text="Detener Localización"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/btnLocalizar" />
 
-        <TextView
-            android:id="@+id/tvTituloAcciones"
-            android:layout_width="wrap_content"
+        <!-- ===================== ACCIONES DE CAMPO (bloque con tinte de urgencia) ===================== -->
+        <LinearLayout
+            android:id="@+id/cardAccionesCampo"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Acciones de Campo:"
-            android:textColor="@color/text_title_dark"
-            android:textStyle="bold"
-            android:layout_marginBottom="10dp"
-            android:visibility="gone" />
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="30dp"
+            android:background="@drawable/bg_alert_card"
+            android:orientation="vertical"
+            android:padding="18dp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/btnDetener"
+            tools:visibility="visible">
 
-        <Button
-            android:id="@+id/btnConfirmarReal"
-            style="@style/Widget.TrapLink.Button.Primary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
-            android:text="Confirmar Captura Real"
-            android:visibility="gone" />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="14dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/btnFalsoPositivo"
-            style="@style/Widget.TrapLink.Button.Danger"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Marcar Falso Positivo"
-            android:visibility="gone" />
+                <View
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_chip_capture" />
 
-    </LinearLayout>
+                <TextView
+                    android:id="@+id/tvTituloAcciones"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Acciones de campo"
+                    android:textColor="@color/chip_text_capture"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:visibility="visible" />
+            </LinearLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+            <Button
+                android:id="@+id/btnConfirmarReal"
+                style="@style/Widget.TrapLink.Button.Primary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:drawableStart="@drawable/ic_confirm_check"
+                android:drawablePadding="8dp"
+                android:drawableTint="#FFFFFF"
+                android:text="Confirmar Captura Real"
+                android:visibility="visible" />
+
+            <Button
+                android:id="@+id/btnFalsoPositivo"
+                style="@style/Widget.TrapLink.Button.Danger"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableStart="@drawable/ic_false_positive"
+                android:drawablePadding="8dp"
+                android:text="Marcar Falso Positivo"
+                android:visibility="visible" />
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.core.widget.NestedScrollView>

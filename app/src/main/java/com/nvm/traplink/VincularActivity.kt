@@ -1,13 +1,17 @@
 package com.nvm.traplink
 
 import android.Manifest
+import android.animation.ObjectAnimator
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.widget.Button
+import android.view.Gravity
+import android.view.View
+import android.view.animation.LinearInterpolator
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -26,13 +30,31 @@ import com.nvm.traplink.data.VincularRequestDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.random.Random
 
 class VincularActivity : AppCompatActivity() {
 
     private lateinit var etNumeroSerie: EditText
-    private lateinit var btnVincularManual: Button
-    private lateinit var btnEscanearQR: Button
+    private lateinit var btnVincularManual: LinearLayout
+    private lateinit var btnEscanearQR: LinearLayout
+    private lateinit var loadingRow: LinearLayout
+    private lateinit var successOverlay: FrameLayout
+    private lateinit var successCheckCircle: FrameLayout
+    private lateinit var confettiContainer: FrameLayout
+
+    private lateinit var tabManual: TextView
+    private lateinit var tabQR: TextView
+    private lateinit var seccionManual: LinearLayout
+    private lateinit var seccionQR: LinearLayout
+    private lateinit var scanLine: View
+
+    private lateinit var cardUltimoVinculado: LinearLayout
+    private lateinit var tvUltimoVinculadoSerie: TextView
+    private lateinit var tvUltimoVinculadoTiempo: TextView
+
     private var isDarkThemeActive: Boolean = false
+    private var cargando: Boolean = false
+    private var scanLineAnimator: ObjectAnimator? = null
 
     private val prefs by lazy { getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE) }
 
@@ -47,7 +69,6 @@ class VincularActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // 1. Validar e Inyectar tema activo antes de pintar la UI
         isDarkThemeActive = prefs.getBoolean("dark_mode", false)
         AppCompatDelegate.setDefaultNightMode(
             if (isDarkThemeActive) AppCompatDelegate.MODE_NIGHT_YES
@@ -64,7 +85,6 @@ class VincularActivity : AppCompatActivity() {
             insets
         }
 
-        // 2. Controladores del Toggle del Tema e Icono
         val ivToggleIcon = findViewById<ImageView>(R.id.ivToggleTemaIcon)
         ivToggleIcon.setImageResource(if (isDarkThemeActive) R.drawable.ic_sun else R.drawable.ic_moon)
 
@@ -78,17 +98,42 @@ class VincularActivity : AppCompatActivity() {
             recreate()
         }
 
-        // Vincular componentes visuales del formulario
         etNumeroSerie = findViewById(R.id.etNumeroSerie)
         btnVincularManual = findViewById(R.id.btnVincularManual)
         btnEscanearQR = findViewById(R.id.btnEscanearQR)
+        loadingRow = findViewById(R.id.loadingRow)
+        successOverlay = findViewById(R.id.successOverlay)
+        successCheckCircle = findViewById(R.id.successCheckCircle)
 
-        // Vincular referencias directas de la barra unificada
+        tabManual = findViewById(R.id.tabManual)
+        tabQR = findViewById(R.id.tabQR)
+        seccionManual = findViewById(R.id.seccionManual)
+        seccionQR = findViewById(R.id.seccionQR)
+        scanLine = findViewById(R.id.scanLine)
+
+        cardUltimoVinculado = findViewById(R.id.cardUltimoVinculado)
+        tvUltimoVinculadoSerie = findViewById(R.id.tvUltimoVinculadoSerie)
+        tvUltimoVinculadoTiempo = findViewById(R.id.tvUltimoVinculadoTiempo)
+
+        // Contenedor para el confeti de celebración (se agrega en tiempo de ejecución sobre el overlay)
+        confettiContainer = FrameLayout(this)
+        (successOverlay.parent as? androidx.constraintlayout.widget.ConstraintLayout)?.let {
+            // Insertamos el contenedor de confeti como hermano del successOverlay, mismo tamaño y posición
+            val params = successOverlay.layoutParams
+            it.addView(confettiContainer, params)
+            confettiContainer.id = View.generateViewId()
+        }
+
+        mostrarUltimoVinculadoSiExiste()
+
+        tabManual.setOnClickListener { seleccionarTab(esManual = true) }
+        tabQR.setOnClickListener { seleccionarTab(esManual = false) }
+
         val btnNavDispositivos = findViewById<TextView>(R.id.btnNavDispositivos)
         val btnNavEventos = findViewById<TextView>(R.id.btnNavEventos)
 
-        // Acción: Botón Vincular Manual
         btnVincularManual.setOnClickListener {
+            if (cargando) return@setOnClickListener
             val serieText = etNumeroSerie.text.toString().trim()
             if (serieText.isEmpty()) {
                 etNumeroSerie.error = "Ingresa un número de serie válido"
@@ -97,12 +142,11 @@ class VincularActivity : AppCompatActivity() {
             ejecutarVinculacionEnAzure(serieText)
         }
 
-        // Acción: Botón Escanear QR
         btnEscanearQR.setOnClickListener {
+            if (cargando) return@setOnClickListener
             verificarPermisosYEscandear()
         }
 
-        // --- NAVEGACIÓN INFERIOR SIN TRANSICIÓN DE SALTO ---
         btnNavDispositivos.setOnClickListener {
             startActivity(Intent(this, Inicio::class.java))
             overridePendingTransition(0, 0)
@@ -115,6 +159,73 @@ class VincularActivity : AppCompatActivity() {
             finish()
         }
     }
+
+    // ===================== TABS Manual / Escanear =====================
+
+    private fun seleccionarTab(esManual: Boolean) {
+        if (esManual) {
+            tabManual.setBackgroundResource(R.drawable.bg_toggle_active)
+            tabManual.setTextColor(ContextCompat.getColor(this, R.color.text_title_dark))
+            tabQR.background = null
+            tabQR.setTextColor(ContextCompat.getColor(this, R.color.text_body_grey))
+
+            seccionManual.visibility = View.VISIBLE
+            seccionQR.visibility = View.GONE
+            detenerLineaLaser()
+        } else {
+            tabQR.setBackgroundResource(R.drawable.bg_toggle_active)
+            tabQR.setTextColor(ContextCompat.getColor(this, R.color.text_title_dark))
+            tabManual.background = null
+            tabManual.setTextColor(ContextCompat.getColor(this, R.color.text_body_grey))
+
+            seccionQR.visibility = View.VISIBLE
+            seccionManual.visibility = View.GONE
+            iniciarLineaLaser()
+        }
+    }
+
+    // ===================== LÍNEA LÁSER (solo mientras el tab QR está activo) =====================
+
+    private fun iniciarLineaLaser() {
+        detenerLineaLaser()
+        val frameHeight = 180 // dp, coincide con la altura del FrameLayout del visor
+        val distanciaPx = frameHeight * resources.displayMetrics.density
+
+        scanLineAnimator = ObjectAnimator.ofFloat(scanLine, "translationY", 0f, distanciaPx - 20f).apply {
+            duration = 1600
+            repeatMode = ObjectAnimator.REVERSE
+            repeatCount = ObjectAnimator.INFINITE
+            interpolator = LinearInterpolator()
+            start()
+        }
+    }
+
+    private fun detenerLineaLaser() {
+        scanLineAnimator?.cancel()
+        scanLine.translationY = 0f
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        detenerLineaLaser()
+    }
+
+    // ===================== ÚLTIMO VINCULADO =====================
+
+    private fun mostrarUltimoVinculadoSiExiste() {
+        val ultimaSerie = prefs.getString("ULTIMO_VINCULADO_SERIE", null)
+        if (!ultimaSerie.isNullOrEmpty()) {
+            tvUltimoVinculadoSerie.text = ultimaSerie
+            tvUltimoVinculadoTiempo.text = "hace un momento"
+            cardUltimoVinculado.visibility = View.VISIBLE
+        }
+    }
+
+    private fun guardarUltimoVinculado(numeroSerie: String) {
+        prefs.edit().putString("ULTIMO_VINCULADO_SERIE", numeroSerie).apply()
+    }
+
+    // ===================== ESCANEO QR =====================
 
     private fun verificarPermisosYEscandear() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
@@ -146,6 +257,8 @@ class VincularActivity : AppCompatActivity() {
             }
     }
 
+    // ===================== VINCULACIÓN =====================
+
     private fun ejecutarVinculacionEnAzure(numeroSerie: String) {
         val tokenGuardado = prefs.getString("AUTH_TOKEN", "") ?: ""
         val usuarioIdGuardado = prefs.getInt("USUARIO_ID", -1)
@@ -155,7 +268,7 @@ class VincularActivity : AppCompatActivity() {
             return
         }
 
-        Toast.makeText(this, "Enviando: Serie=$numeroSerie, ID=$usuarioIdGuardado", Toast.LENGTH_LONG).show()
+        mostrarEstadoCarga(true)
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
@@ -167,11 +280,12 @@ class VincularActivity : AppCompatActivity() {
                 val response = RetrofitClient.trapLinkService.vincularDispositivo(requestDto)
 
                 withContext(Dispatchers.Main) {
+                    mostrarEstadoCarga(false)
+
                     if (response.isSuccessful) {
-                        Toast.makeText(this@VincularActivity, "¡Vinculado con éxito!", Toast.LENGTH_LONG).show()
                         etNumeroSerie.text.clear()
-                        startActivity(Intent(this@VincularActivity, Inicio::class.java))
-                        finish()
+                        guardarUltimoVinculado(numeroSerie)
+                        mostrarAnimacionExito()
                     } else {
                         val codigoError = response.code()
                         val mensajeError = response.errorBody()?.string() ?: "Error de servidor"
@@ -180,9 +294,97 @@ class VincularActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
+                    mostrarEstadoCarga(false)
                     Toast.makeText(this@VincularActivity, "Error de red: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
+        }
+    }
+
+    private fun mostrarEstadoCarga(cargandoAhora: Boolean) {
+        cargando = cargandoAhora
+        loadingRow.visibility = if (cargandoAhora) View.VISIBLE else View.GONE
+        btnVincularManual.isEnabled = !cargandoAhora
+        btnEscanearQR.isEnabled = !cargandoAhora
+        etNumeroSerie.isEnabled = !cargandoAhora
+        btnVincularManual.alpha = if (cargandoAhora) 0.6f else 1f
+        btnEscanearQR.alpha = if (cargandoAhora) 0.6f else 1f
+    }
+
+    // ===================== ANIMACIÓN DE ÉXITO + CONFETI =====================
+
+    private fun mostrarAnimacionExito() {
+        successOverlay.visibility = View.VISIBLE
+        successOverlay.alpha = 0f
+        successCheckCircle.scaleX = 0.3f
+        successCheckCircle.scaleY = 0.3f
+
+        successOverlay.animate()
+            .alpha(1f)
+            .setDuration(200)
+            .start()
+
+        successCheckCircle.animate()
+            .scaleX(1.1f)
+            .scaleY(1.1f)
+            .setDuration(300)
+            .withEndAction {
+                successCheckCircle.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(150)
+                    .start()
+                lanzarConfeti()
+            }
+            .start()
+
+        successOverlay.postDelayed({
+            startActivity(Intent(this, Inicio::class.java))
+            finish()
+        }, 1300)
+    }
+
+    /**
+     * Lanza pequeños puntos de color desde el centro del check en distintas direcciones,
+     * como celebración de una sola vez (no un loop) para el momento de éxito.
+     */
+    private fun lanzarConfeti() {
+        val colores = listOf(
+            R.color.accent_neon,
+            R.color.status_active,
+            R.color.secondary,
+            R.color.status_battery_low
+        )
+
+        val centerX = successCheckCircle.x + successCheckCircle.width / 2f
+        val centerY = successCheckCircle.y + successCheckCircle.height / 2f
+
+        repeat(10) { i ->
+            val dot = View(this)
+            val size = (6 + Random.nextInt(4))
+            val sizePx = (size * resources.displayMetrics.density).toInt()
+
+            dot.layoutParams = FrameLayout.LayoutParams(sizePx, sizePx)
+            dot.background = ContextCompat.getDrawable(this, R.drawable.dot_status_active)
+            dot.backgroundTintList = ContextCompat.getColorStateList(this, colores[i % colores.size])
+            dot.x = centerX
+            dot.y = centerY
+
+            confettiContainer.addView(dot)
+
+            val angulo = (i * 36) + Random.nextInt(20)
+            val radianes = Math.toRadians(angulo.toDouble())
+            val distancia = 90f + Random.nextInt(40)
+            val destinoX = (Math.cos(radianes) * distancia).toFloat()
+            val destinoY = (Math.sin(radianes) * distancia).toFloat()
+
+            dot.animate()
+                .translationX(destinoX)
+                .translationY(destinoY)
+                .alpha(0f)
+                .setDuration(700)
+                .withEndAction { confettiContainer.removeView(dot) }
+                .start()
         }
     }
 }

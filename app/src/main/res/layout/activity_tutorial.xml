@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    tools:context=".TutorialActivity">
+
+    <!-- Contenedor del video, centrado verticalmente -->
+    <FrameLayout
+        android:id="@+id/videoContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <VideoView
+            android:id="@+id/videoTutorial"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center" />
+
+        <!-- Loader mientras el video prepara el buffer -->
+        <ProgressBar
+            android:id="@+id/progressVideo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:indeterminateTint="@color/accent_neon" />
+
+    </FrameLayout>
+
+    <!-- Barra superior con título y botón cerrar -->
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="#88000000"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="14dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Cómo vincular tu nodo"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <FrameLayout
+            android:id="@+id/btnCerrarTutorial"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/bg_theme_toggle"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?android:attr/selectableItemBackgroundBorderless">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_close" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <!-- Botón de play superpuesto (se oculta al reproducir) -->
+    <FrameLayout
+        android:id="@+id/btnPlayOverlay"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:background="@drawable/bg_radar_center"
+        android:clickable="true"
+        android:elevation="8dp"
+        android:focusable="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_play_circle"
+            app:tint="#FFFFFF" />
+    </FrameLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
