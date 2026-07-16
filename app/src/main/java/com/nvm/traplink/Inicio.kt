@@ -178,6 +178,35 @@ class Inicio : AppCompatActivity() {
             overridePendingTransition(0, 0)
             finish()
         }
+
+        // Vinculamos el contenedor del botón de usuario
+        val btnLogout = findViewById<FrameLayout>(R.id.btnLogout)
+
+        btnLogout.setOnClickListener { view ->
+            // Creamos el PopupMenu anclado a la vista del botón
+            val popup = androidx.appcompat.widget.PopupMenu(this, view)
+            popup.menuInflater.inflate(R.menu.menu_usuario, popup.menu)
+
+            // Configuramos las acciones de los clics de cada opción
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.menu_detalles -> {
+                        // Ir a la pantalla de Detalles
+                        val intent = Intent(this, DetallesCuenta::class.java)
+                        startActivity(intent)
+                        true
+                    }
+                    R.id.menu_cerrar_sesion -> {
+                        ejecutarCerrarSesion()
+                        true
+                    }
+                    else -> false
+                }
+            }
+
+            // Mostramos el menú
+            popup.show()
+        }
     }
 
     private fun cargarDispositivosDesdeAzure() {
@@ -412,5 +441,20 @@ class Inicio : AppCompatActivity() {
                 notify(notificationId, builder.build())
             }
         }
+    }
+
+    private fun ejecutarCerrarSesion() {
+        // 1. Limpiar las SharedPreferences para borrar tokens e IDs de sesión
+        val sharedPreferences = getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE)
+        sharedPreferences.edit().clear().apply()
+
+        // 2. Redirigir a la pantalla de Login (asumiendo que se llama LoginActivity)
+        val intent = Intent(this, MainActivity::class.java)
+
+        // Limpiamos la pila de actividades para que el usuario no pueda volver atrás usando el botón físico
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+
+        finish()
     }
 }

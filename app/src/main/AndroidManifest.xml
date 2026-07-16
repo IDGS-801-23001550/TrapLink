@@ -19,6 +19,10 @@
         android:roundIcon="@mipmap/ic_traplink"
         android:supportsRtl="true"
         android:theme="@style/Theme.TrapLink">
+
+        <activity
+            android:name=".DetallesCuenta"
+            android:exported="false" />
         <activity
             android:name=".TutorialActivity"
             android:exported="false" />
