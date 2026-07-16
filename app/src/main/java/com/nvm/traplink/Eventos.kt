@@ -158,6 +158,7 @@ class Eventos : AppCompatActivity() {
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
+                // 1. Solicitamos de forma paralela los KPIs globales, el desglose del backend y tus dispositivos reales
                 val responseKpis = RetrofitClient.trapLinkService.getResumenKpis(tokenCompleto)
                 val responseDesglose = RetrofitClient.trapLinkService.getFalsosPositivos(tokenCompleto)
                 val responseDispositivos = RetrofitClient.trapLinkService.getMisDispositivos(tokenCompleto)
@@ -166,6 +167,7 @@ class Eventos : AppCompatActivity() {
                     swipeRefreshEventos.isRefreshing = false
                     ocultarSkeletonSiCorresponde()
 
+                    // 2. Guardamos la lista de dispositivos reales vinculados que ve el usuario
                     if (responseDispositivos.isSuccessful && responseDispositivos.body() != null) {
                         cacheDispositivos = responseDispositivos.body()!!
                     }
@@ -174,13 +176,13 @@ class Eventos : AppCompatActivity() {
                     var pendientesGlobales = 0
                     var falsosGlobales = 0
 
+                    // 3. Procesamos los contadores de la gráfica
                     if (responseKpis.isSuccessful && responseKpis.body() != null) {
                         val kpis = responseKpis.body()!!
                         realesGlobales = kpis.capturasReales
                         pendientesGlobales = kpis.eventosSinRevisar
                         falsosGlobales = kpis.falsosPositivos
 
-                        // Actualizar tarjetas KPI
                         tvKpiReales.text = realesGlobales.toString()
                         tvKpiFalsos.text = falsosGlobales.toString()
                         tvKpiPendientes.text = pendientesGlobales.toString()
@@ -194,36 +196,50 @@ class Eventos : AppCompatActivity() {
 
                     tvUltimaActualizacion.text = "Actualizado a las ${horaActual()}"
 
-                    var listaVacia = true
-
-                    if (responseDesglose.isSuccessful && responseDesglose.body() != null) {
-                        val listaDesglose = responseDesglose.body()!!
-                        if (listaDesglose.isNotEmpty()) {
-                            rvAnalisisTrampas.adapter = AnalisisTrampasAdapter(listaDesglose, realesGlobales, pendientesGlobales) { nodo ->
-                                irADetalles(nodo.dispositivoID)
-                            }
-                            rvAnalisisTrampas.scheduleLayoutAnimation()
-                            listaVacia = false
-
-                            cardInsight.visibility = View.VISIBLE
-                            tvInsightText.text = generarInsight(listaDesglose)
-                        } else {
-                            cardInsight.visibility = View.GONE
-                        }
+                    // 4. Cruzamos los datos del desglose con tus dispositivos REALES vinculados
+                    val listaDesgloseBackend = if (responseDesglose.isSuccessful && responseDesglose.body() != null) {
+                        responseDesglose.body()!!
                     } else {
-                        val datosPrueba = listOf(
-                            com.nvm.traplink.data.FalsosPositivosResponseDto(
-                                dispositivoID = 1,
-                                totalEventos = 7,
-                                falsosPositivos = 0,
-                                pctFalsosPositivos = 0.0
-                            )
-                        )
-                        rvAnalisisTrampas.adapter = AnalisisTrampasAdapter(datosPrueba, realesGlobales, pendientesGlobales) { nodo ->
+                        emptyList()
+                    }
+
+                    val listaFinalNodos = ArrayList<com.nvm.traplink.data.FalsosPositivosResponseDto>()
+
+                    if (cacheDispositivos.isNotEmpty()) {
+                        // Para cada dispositivo que realmente tiene el usuario...
+                        for (dispositivo in cacheDispositivos) {
+                            // Buscamos si tiene estadísticas registradas en el backend
+                            val estadistica = listaDesgloseBackend.find { it.dispositivoID == dispositivo.dispositivoID }
+
+                            if (estadistica != null) {
+                                // Si tiene datos, añadimos su DTO correspondiente
+                                listaFinalNodos.add(estadistica)
+                            } else {
+                                // Si es un nodo recién vinculado o sin eventos, le creamos su DTO en ceros para que no desaparezca
+                                listaFinalNodos.add(
+                                    com.nvm.traplink.data.FalsosPositivosResponseDto(
+                                        dispositivoID = dispositivo.dispositivoID,
+                                        totalEventos = 0,
+                                        falsosPositivos = 0,
+                                        pctFalsosPositivos = 0.0
+                                    )
+                                )
+                            }
+                        }
+                    }
+
+                    // 5. Pintamos el RecyclerView basándonos en los dispositivos reales del usuario
+                    val listaVacia = listaFinalNodos.isEmpty()
+
+                    if (!listaVacia) {
+                        rvAnalisisTrampas.adapter = AnalisisTrampasAdapter(listaFinalNodos, realesGlobales, pendientesGlobales) { nodo ->
                             irADetalles(nodo.dispositivoID)
                         }
                         rvAnalisisTrampas.scheduleLayoutAnimation()
-                        listaVacia = false
+
+                        cardInsight.visibility = View.VISIBLE
+                        tvInsightText.text = generarInsight(listaFinalNodos)
+                    } else {
                         cardInsight.visibility = View.GONE
                     }
 

@@ -195,7 +195,15 @@ class Detalles : AppCompatActivity() {
                     }
                 } catch (e: Exception) {
                     android.util.Log.e("TrapLinkError", "Fallo total en validar estados", e)
+                    // IMPORTANTE: Si falla la red, aseguramos el hilo principal para no romper la UI
+                    withContext(Dispatchers.Main) {
+                        actualizarEstadoChip("Error al verificar alertas", R.drawable.bg_chip_offline, R.color.chip_text_offline)
+                        tieneAlertaActiva = false
+                        detenerPulso()
+                    }
                 }
+
+
             }
         }
 
@@ -209,7 +217,12 @@ class Detalles : AppCompatActivity() {
         btnDetener.setOnClickListener {
             enviarComandoWebSocket(nombre, "DETENER_LOCALIZAR")
 
-            if (tieneAlertaActiva) {
+            // Validamos si la variable es true O si el chip de estado actual ya indicaba una alerta o localización activa
+            val textoEstadoActual = tvDetalleEstado.text.toString()
+            val tieneAlertaVisual = textoEstadoActual.contains("Alerta", ignoreCase = true) ||
+                    textoEstadoActual.contains("Localizando", ignoreCase = true)
+
+            if (tieneAlertaActiva || tieneAlertaVisual) {
                 actualizarEstadoChip("Alerta Activa (Pendiente de Revisión)", R.drawable.bg_chip_capture, R.color.chip_text_capture)
 
                 cardAccionesCampo.visibility = View.VISIBLE
