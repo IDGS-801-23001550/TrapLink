@@ -16,4 +16,11 @@ interface AuthApiService {
     suspend fun registrar(
         @Body request: RegistroRequestDto
     ): Response<RegistroResponseDto>
+
+
+    @PUT("Auth/perfil")
+    suspend fun actualizarPerfil(
+        @Header("Authorization") token: String,
+        @Body perfilDto: ActualizarPerfilDto
+    ): Response<MensajeRespuestaDto>
 }
