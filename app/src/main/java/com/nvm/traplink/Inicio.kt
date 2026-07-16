@@ -32,6 +32,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.nvm.traplink.data.RetrofitClient
+import com.nvm.traplink.CerrarSesion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -197,13 +198,13 @@ class Inicio : AppCompatActivity() {
                         true
                     }
                     R.id.menu_cerrar_sesion -> {
-                        ejecutarCerrarSesion()
+                        // ¡Llamada directa de una sola línea!
+                        CerrarSesion.cerrarSesion(this)
                         true
                     }
                     else -> false
                 }
             }
-
             // Mostramos el menú
             popup.show()
         }
@@ -441,20 +442,5 @@ class Inicio : AppCompatActivity() {
                 notify(notificationId, builder.build())
             }
         }
-    }
-
-    private fun ejecutarCerrarSesion() {
-        // 1. Limpiar las SharedPreferences para borrar tokens e IDs de sesión
-        val sharedPreferences = getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE)
-        sharedPreferences.edit().clear().apply()
-
-        // 2. Redirigir a la pantalla de Login (asumiendo que se llama LoginActivity)
-        val intent = Intent(this, MainActivity::class.java)
-
-        // Limpiamos la pila de actividades para que el usuario no pueda volver atrás usando el botón físico
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
-
-        finish()
     }
 }

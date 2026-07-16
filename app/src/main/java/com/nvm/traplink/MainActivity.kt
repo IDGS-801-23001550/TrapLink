@@ -63,6 +63,7 @@ class MainActivity : AppCompatActivity() {
 
                         val token = loginResponse.token
                         val nombreUsuario = loginResponse.usuario.nombre
+                        val correoUsuario = loginResponse.usuario.email
                         // Extraemos el ID numérico real desde el objeto usuario del DTO
                         val idUsuarioReal = loginResponse.usuario.usuarioId
 
@@ -73,6 +74,8 @@ class MainActivity : AppCompatActivity() {
                         sharedPreferences.edit()
                             .putString("AUTH_TOKEN", token)
                             .putInt("USUARIO_ID", idUsuarioReal) // <-- Aquí queda guardado permanentemente
+                            .putString("USER_NAME", nombreUsuario)
+                            .putString("USER_EMAIL", correoUsuario)
                             .apply()
 
                         // Redirigimos a la pantalla de Inicio (ya no dependemos de arrastrar extras)

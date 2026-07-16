@@ -3,16 +3,17 @@ package com.nvm.traplink
 import android.content.Context
 import android.content.Intent
 
-class CerrarSesion {
+object CerrarSesion {
 
     fun cerrarSesion(context: Context) {
-        // Limpiar SharedPreferences usando el contexto de la pantalla que lo llama
+        // 1. Limpiar SharedPreferences usando el prefijo unificado
         val sharedPreferences = context.getSharedPreferences("TrapLinkPrefs", Context.MODE_PRIVATE)
         sharedPreferences.edit().clear().apply()
 
-        // Redirigir al Login
-        val intent = Intent(context, MainActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        // 2. Redirigir al Login (MainActivity) limpiando la pila
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
         context.startActivity(intent)
     }
 }

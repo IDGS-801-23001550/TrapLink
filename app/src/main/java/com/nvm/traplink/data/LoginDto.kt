@@ -28,3 +28,17 @@ data class RegistroRequestDto(
 data class RegistroResponseDto(
     val mensaje: String
 )
+
+data class ActualizarPerfilDto(
+    val nombre: String,
+    val email: String,
+    val tokenPushFCM: String?, // Puede ser nulo si no usas notificaciones aún
+    val empresa: String?,
+    val telefono: String?,
+    val direccion: String?
+)
+
+// DTO PARA LA RESPUESTA (coincide con { mensaje: "..." })
+data class MensajeRespuestaDto(
+    val mensaje: String
+)

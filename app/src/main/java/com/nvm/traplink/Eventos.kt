@@ -130,6 +130,35 @@ class Eventos : AppCompatActivity() {
             overridePendingTransition(0, 0)
             finish()
         }
+
+        // Vinculamos el contenedor del botón de usuario
+        val btnLogout = findViewById<FrameLayout>(R.id.btnLogout)
+
+        btnLogout.setOnClickListener { view ->
+            // Creamos el PopupMenu anclado a la vista del botón
+            val popup = androidx.appcompat.widget.PopupMenu(this, view)
+            popup.menuInflater.inflate(R.menu.menu_usuario, popup.menu)
+
+            // Configuramos las acciones de los clics de cada opción
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.menu_detalles -> {
+                        // Ir a la pantalla de Detalles
+                        val intent = Intent(this, DetallesCuenta::class.java)
+                        startActivity(intent)
+                        true
+                    }
+                    R.id.menu_cerrar_sesion -> {
+                        // ¡Llamada directa de una sola línea!
+                        CerrarSesion.cerrarSesion(this)
+                        true
+                    }
+                    else -> false
+                }
+            }
+            // Mostramos el menú
+            popup.show()
+        }
     }
 
     private fun configurarGrafica() {
