@@ -12,8 +12,6 @@ import java.util.Locale
 
 class AnalisisTrampasAdapter(
     private val listaAnalisis: List<FalsosPositivosResponseDto>,
-    private val globalesReales: Int,
-    private val globalesPendientes: Int,
     private val onNodoClick: (FalsosPositivosResponseDto) -> Unit
 ) : RecyclerView.Adapter<AnalisisTrampasAdapter.AnalisisViewHolder>() {
 
@@ -38,16 +36,16 @@ class AnalisisTrampasAdapter(
         val item = listaAnalisis[position]
         val context = holder.itemView.context
 
-        // Solución temporal: Si solo hay un nodo (ID: 1), toma los globales directamente.
-        // Si hay más, calcula de forma segura para no romper la consistencia.
-        val reales = if (listaAnalisis.size == 1) globalesReales else (item.totalEventos - item.falsosPositivos) * globalesReales / (globalesReales + globalesPendientes)
-        val pendientes = item.totalEventos - item.falsosPositivos - reales
+        // Leemos directamente del DTO sin realizar cálculos aproximados en el cliente
+        val reales = item.capturasReales
+        val falsos = item.falsosPositivos
+        val pendientes = item.eventosSinRevisar
 
         holder.tvIdDispositivo.text = "ID Dispositivo: ${item.dispositivoID}"
         holder.tvPorcentajeFalsos.text = String.format(Locale.getDefault(), "%.1f%% Falsos", item.pctFalsosPositivos)
         holder.tvTotalEventos.text = "Eventos: ${item.totalEventos}"
         holder.tvCapturasReales.text = "Reales: $reales"
-        holder.tvFalsosContador.text = "Falsos: ${item.falsosPositivos}"
+        holder.tvFalsosContador.text = "Falsos: $falsos"
         holder.tvPendientesContador.text = "Pend: $pendientes"
 
         // ===== Chip de porcentaje con color según severidad =====
@@ -68,7 +66,7 @@ class AnalisisTrampasAdapter(
 
         // ===== Barra segmentada: proporción visual de reales / falsos / pendientes =====
         val realesSeguro = reales.coerceAtLeast(0)
-        val falsosSeguro = item.falsosPositivos.coerceAtLeast(0)
+        val falsosSeguro = falsos.coerceAtLeast(0)
         val pendientesSeguro = pendientes.coerceAtLeast(0)
         val totalSegmentos = realesSeguro + falsosSeguro + pendientesSeguro
 
@@ -90,10 +88,6 @@ class AnalisisTrampasAdapter(
         }
     }
 
-    /**
-     * Ajusta el layout_weight de un segmento de la barra de progreso.
-     * Un weight de 0 colapsa el segmento a ancho 0 sin necesidad de ocultarlo.
-     */
     private fun aplicarPeso(view: View, weight: Float) {
         val params = view.layoutParams as LinearLayout.LayoutParams
         params.weight = weight
