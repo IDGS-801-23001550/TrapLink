@@ -250,7 +250,9 @@ class Eventos : AppCompatActivity() {
                                         dispositivoID = dispositivo.dispositivoID,
                                         totalEventos = 0,
                                         falsosPositivos = 0,
-                                        pctFalsosPositivos = 0.0
+                                        pctFalsosPositivos = 0.0,
+                                        capturasReales = 0,
+                                        eventosSinRevisar = 0
                                     )
                                 )
                             }
@@ -261,7 +263,7 @@ class Eventos : AppCompatActivity() {
                     val listaVacia = listaFinalNodos.isEmpty()
 
                     if (!listaVacia) {
-                        rvAnalisisTrampas.adapter = AnalisisTrampasAdapter(listaFinalNodos, realesGlobales, pendientesGlobales) { nodo ->
+                        rvAnalisisTrampas.adapter = AnalisisTrampasAdapter(listaFinalNodos) { nodo ->
                             irADetalles(nodo.dispositivoID)
                         }
                         rvAnalisisTrampas.scheduleLayoutAnimation()
