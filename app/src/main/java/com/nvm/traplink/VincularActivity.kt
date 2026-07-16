@@ -370,7 +370,7 @@ class VincularActivity : AppCompatActivity() {
         successOverlay.postDelayed({
             startActivity(Intent(this, Inicio::class.java))
             finish()
-        }, 1300)
+        }, 1700)
     }
 
     /**
@@ -385,12 +385,20 @@ class VincularActivity : AppCompatActivity() {
             R.color.status_battery_low
         )
 
-        val centerX = successCheckCircle.x + successCheckCircle.width / 2f
-        val centerY = successCheckCircle.y + successCheckCircle.height / 2f
+        // successCheckCircle.x/.y son relativos a SU padre (el LinearLayout que lo centra
+        // dentro de successOverlay), no a confettiContainer. Usamos getLocationOnScreen()
+        // para convertir ambas vistas al mismo sistema de coordenadas y calcular el centro real.
+        val circleLoc = IntArray(2)
+        successCheckCircle.getLocationOnScreen(circleLoc)
+        val containerLoc = IntArray(2)
+        confettiContainer.getLocationOnScreen(containerLoc)
 
-        repeat(10) { i ->
+        val centerX = (circleLoc[0] - containerLoc[0] + successCheckCircle.width / 2f)
+        val centerY = (circleLoc[1] - containerLoc[1] + successCheckCircle.height / 2f)
+
+        repeat(14) { i ->
             val dot = View(this)
-            val size = (6 + Random.nextInt(4))
+            val size = (10 + Random.nextInt(8)) // puntos más grandes: 10-18dp
             val sizePx = (size * resources.displayMetrics.density).toInt()
 
             dot.layoutParams = FrameLayout.LayoutParams(sizePx, sizePx)
@@ -401,17 +409,21 @@ class VincularActivity : AppCompatActivity() {
 
             confettiContainer.addView(dot)
 
-            val angulo = (i * 36) + Random.nextInt(20)
+            val angulo = (i * (360 / 14)) + Random.nextInt(20)
             val radianes = Math.toRadians(angulo.toDouble())
-            val distancia = 90f + Random.nextInt(40)
-            val destinoX = (Math.cos(radianes) * distancia).toFloat()
-            val destinoY = (Math.sin(radianes) * distancia).toFloat()
+            val distancia = (180f + Random.nextInt(120)) * resources.displayMetrics.density
+            // IMPORTANTE: se suma al centro (centerX/centerY), no se reemplaza,
+            // porque .animate().translationX() fija el valor absoluto de la propiedad,
+            // y dot.x = centerX ya dejó ese valor como base en translationX.
+            val destinoX = centerX + (Math.cos(radianes) * distancia).toFloat()
+            val destinoY = centerY + (Math.sin(radianes) * distancia).toFloat()
 
             dot.animate()
                 .translationX(destinoX)
                 .translationY(destinoY)
                 .alpha(0f)
-                .setDuration(700)
+                .setDuration(1100)
+                .setStartDelay(Random.nextInt(80).toLong())
                 .withEndAction { confettiContainer.removeView(dot) }
                 .start()
         }

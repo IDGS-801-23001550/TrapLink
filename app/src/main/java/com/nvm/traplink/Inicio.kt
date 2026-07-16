@@ -255,6 +255,11 @@ class Inicio : AppCompatActivity() {
                             emptyState.visibility = View.VISIBLE
                             rvDispositivos.visibility = View.GONE
                             reanudarVideoPreview()
+
+                            // Asegura que al mostrarse el estado vacío empiece desde arriba
+                            emptyState.post {
+                                emptyState.scrollTo(0, 0)
+                            }
                         } else {
                             emptyState.visibility = View.GONE
                             rvDispositivos.visibility = View.VISIBLE
@@ -360,19 +365,27 @@ class Inicio : AppCompatActivity() {
             val uri = Uri.parse("android.resource://$packageName/${R.raw.tutorial_vincular}")
             videoPreview.setVideoURI(uri)
 
+            // Evitamos que el video solicite o tome el foco automáticamente
+            videoPreview.isFocusable = false
+            videoPreview.isFocusableInTouchMode = false
+
             videoPreview.setOnPreparedListener { mp ->
                 mediaPlayerPreview = mp
                 mp.isLooping = true
-                mp.setVolume(0f, 0f) // arranca silenciado, como un preview de Instagram/TikTok
+                mp.setVolume(0f, 0f) // arranca silenciado
                 videoPreview.start()
+
+                // Forzamos al NestedScrollView a regresar arriba de inmediato
+                // por si la reproducción intentó mover la pantalla
+                emptyState.post {
+                    emptyState.scrollTo(0, 0)
+                }
             }
 
-            // Si por alguna razón el video no puede reproducirse, no truena la pantalla,
-            // simplemente no se muestra el preview.
             videoPreview.setOnErrorListener { _, _, _ -> true }
 
         } catch (e: Exception) {
-            // Silenciosamente ignoramos el error del preview; el resto del onboarding sigue funcionando
+            // Silenciosamente ignoramos el error
         }
     }
 
