@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.animation.LinearInterpolator
 import android.widget.Button
@@ -115,7 +116,13 @@ class Detalles : AppCompatActivity() {
         val nombre = intent.getStringExtra("EXTRA_NOMBRE") ?: "Dispositivo"
         val estadoBase = intent.getStringExtra("EXTRA_ESTADO") ?: "Monitoreando"
 
-        tvHeaderTitulo.text = nombre
+        // Log inicial para verificar si se recibió correctamente el ID de la trampa
+        Log.d("TrapLinkDebug", "=== Detalles Activity Iniciada ===")
+        Log.d("TrapLinkDebug", "Intent EXTRA_DISPOSITIVO_ID: $dispositivoId")
+        Log.d("TrapLinkDebug", "Intent EXTRA_NOMBRE: $nombre")
+        Log.d("TrapLinkDebug", "Intent EXTRA_ESTADO: $estadoBase")
+
+        //tvHeaderTitulo.text = nombre
         tvDetalleNombre.text = nombre
 
         iniciarShimmerSkeleton(skeletonBateria)
@@ -169,24 +176,46 @@ class Detalles : AppCompatActivity() {
                             detenerPulso()
                         }
                     } else {
+                        Log.d("TrapLinkDebug", "Consumiendo getEventosPendientes...")
                         val responseEv = RetrofitClient.trapLinkService.getEventosPendientes(tokenCompleto)
 
                         withContext(Dispatchers.Main) {
                             if (responseEv.isSuccessful && responseEv.body() != null) {
                                 val listaPendientes = responseEv.body()!!
-                                val eventoDeEstaTrampa = listaPendientes.find { it.dispositivoID.toInt() == dispositivoId.toInt() }
+                                Log.d("TrapLinkDebug", "API exitosa. Cantidad de pendientes devueltos: ${listaPendientes.size}")
+
+                                // Pintar en consola el contenido exacto de lo que está regresando el JSON
+                                listaPendientes.forEachIndexed { index, ev ->
+                                    Log.d("TrapLinkDebug", "Pendiente [$index] -> EventoID: ${ev.eventoID}, DispositivoID: ${ev.dispositivoID}")
+                                }
+
+                                // Búsqueda de coincidencia controlando posibles fallos de parseo
+                                val eventoDeEstaTrampa = listaPendientes.find {
+                                    try {
+                                        val match = it.dispositivoID.toInt() == dispositivoId
+                                        Log.d("TrapLinkDebug", "Comparando: Evento de Trampa ID [${it.dispositivoID}] con ID Actual [$dispositivoId] -> Resultado match: $match")
+                                        match
+                                    } catch (e: Exception) {
+                                        Log.e("TrapLinkDebug", "Error al parsear dispositivoID: '${it.dispositivoID}' a entero", e)
+                                        false
+                                    }
+                                }
 
                                 if (eventoDeEstaTrampa != null) {
                                     eventoPendienteId = eventoDeEstaTrampa.eventoID
+                                    Log.d("TrapLinkDebug", "¡Match exitoso! eventoPendienteId asignado a: $eventoPendienteId")
+
                                     actualizarEstadoChip("Alerta Activa (Falta Localizar)", R.drawable.bg_chip_capture, R.color.chip_text_capture)
                                     tieneAlertaActiva = true
                                     iniciarPulso()
                                 } else {
+                                    Log.w("TrapLinkDebug", "No se encontró ningún evento pendiente en el JSON que coincida con el dispositivoId: $dispositivoId")
                                     actualizarEstadoChip("Monitoreando (Sin novedades)", R.drawable.bg_chip_active, R.color.chip_text_active)
                                     tieneAlertaActiva = false
                                     detenerPulso()
                                 }
                             } else {
+                                Log.e("TrapLinkDebug", "La llamada API no fue exitosa. Código: ${responseEv.code()} o el cuerpo vino nulo.")
                                 actualizarEstadoChip("Monitoreando (Sin novedades)", R.drawable.bg_chip_active, R.color.chip_text_active)
                                 tieneAlertaActiva = false
                                 detenerPulso()
@@ -194,17 +223,16 @@ class Detalles : AppCompatActivity() {
                         }
                     }
                 } catch (e: Exception) {
-                    android.util.Log.e("TrapLinkError", "Fallo total en validar estados", e)
-                    // IMPORTANTE: Si falla la red, aseguramos el hilo principal para no romper la UI
+                    Log.e("TrapLinkError", "Fallo total en validar estados", e)
                     withContext(Dispatchers.Main) {
                         actualizarEstadoChip("Error al verificar alertas", R.drawable.bg_chip_offline, R.color.chip_text_offline)
                         tieneAlertaActiva = false
                         detenerPulso()
                     }
                 }
-
-
             }
+        } else {
+            Log.w("TrapLinkDebug", "No se consumieron las APIs. dispositivoId: $dispositivoId, token vacío: ${tokenGuardado.isEmpty()}")
         }
 
         // Manejo de Comandos WS
@@ -217,10 +245,11 @@ class Detalles : AppCompatActivity() {
         btnDetener.setOnClickListener {
             enviarComandoWebSocket(nombre, "DETENER_LOCALIZAR")
 
-            // Validamos si la variable es true O si el chip de estado actual ya indicaba una alerta o localización activa
             val textoEstadoActual = tvDetalleEstado.text.toString()
             val tieneAlertaVisual = textoEstadoActual.contains("Alerta", ignoreCase = true) ||
                     textoEstadoActual.contains("Localizando", ignoreCase = true)
+
+            Log.d("TrapLinkDebug", "Click en DETENER. tieneAlertaActiva: $tieneAlertaActiva, tieneAlertaVisual: $tieneAlertaVisual, eventoPendienteId: $eventoPendienteId")
 
             if (tieneAlertaActiva || tieneAlertaVisual) {
                 actualizarEstadoChip("Alerta Activa (Pendiente de Revisión)", R.drawable.bg_chip_capture, R.color.chip_text_capture)
@@ -237,18 +266,16 @@ class Detalles : AppCompatActivity() {
         }
 
         btnConfirmarReal.setOnClickListener {
+            Log.d("TrapLinkDebug", "Click Confirmar Real. Mandando dictamen con eventoPendienteId: $eventoPendienteId")
             ejecutarConfirmacionEnAzure(true, nombre)
         }
 
         btnFalsoPositivo.setOnClickListener {
+            Log.d("TrapLinkDebug", "Click Falso Positivo. Mandando dictamen con eventoPendienteId: $eventoPendienteId")
             ejecutarConfirmacionEnAzure(false, nombre)
         }
     }
 
-    /**
-     * Actualiza el chip de estado (texto + fondo + color de texto) en una sola llamada,
-     * reutilizando los mismos drawables/colores de chip que ya usa item_trampa.
-     */
     private fun actualizarEstadoChip(texto: String, bgRes: Int, colorRes: Int) {
         tvDetalleEstado.text = texto
         tvDetalleEstado.setBackgroundResource(bgRes)
@@ -256,6 +283,7 @@ class Detalles : AppCompatActivity() {
     }
 
     private fun ejecutarConfirmacionEnAzure(esReal: Boolean, nombreDispositivo: String) {
+        Log.d("TrapLinkDebug", "ejecutarConfirmacionEnAzure. esReal: $esReal, ID a procesar: $eventoPendienteId")
         if (eventoPendienteId == -1L) {
             Toast.makeText(this, "No hay ningún evento activo por dictaminar.", Toast.LENGTH_SHORT).show()
             return
@@ -287,10 +315,12 @@ class Detalles : AppCompatActivity() {
 
                         enviarComandoWebSocket(nombreDispositivo, "RESET_TRAMPA")
                     } else {
+                        Log.e("TrapLinkDebug", "Error API dictaminar. Código de respuesta: ${response.code()}")
                         Toast.makeText(this@Detalles, "Error al dictaminar: ${response.code()}", Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
+                Log.e("TrapLinkDebug", "Fallo de red en confirmación Azure", e)
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@Detalles, "Error de red: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
@@ -298,12 +328,8 @@ class Detalles : AppCompatActivity() {
         }
     }
 
-    // ===================== SKELETON LOADER (tiles de info) =====================
+    // ===================== SKELETON LOADER =====================
 
-    /**
-     * Aplica un shimmer (pulso de opacidad en loop) a cualquier View skeleton
-     * mientras se espera la respuesta del API. Reutilizable para ambos tiles.
-     */
     private fun iniciarShimmerSkeleton(view: View) {
         view.animate()
             .alpha(0.4f)
@@ -326,12 +352,8 @@ class Detalles : AppCompatActivity() {
         view.alpha = 1f
     }
 
-    // ===================== ANIMACIÓN DE ENTRADA (hero card + tiles) =====================
+    // ===================== ANIMACIÓN DE ENTRADA =====================
 
-    /**
-     * Anima la tarjeta hero y los tiles de info con fade + slide sutil al
-     * abrir la pantalla, para que no aparezcan "de golpe".
-     */
     private fun animarEntradaDetalles() {
         val heroCard = findViewById<View>(R.id.heroCard)
         val infoTilesRow = findViewById<View>(R.id.infoTilesRow)
@@ -348,10 +370,10 @@ class Detalles : AppCompatActivity() {
         }
     }
 
-    // ===================== PULSO DEL ÍCONO HERO (alerta activa / localizando) =====================
+    // ===================== PULSO DEL ÍCONO HERO =====================
 
     private fun iniciarPulso() {
-        detenerPulso() // evita solapar animadores si ya estaba corriendo
+        detenerPulso()
 
         ringDetalleOuter.visibility = View.VISIBLE
         ringDetalleInner.visibility = View.VISIBLE
