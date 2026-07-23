@@ -20,16 +20,12 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
+
 
         val etEmail = findViewById<TextInputEditText>(R.id.etEmail)
         val etPassword = findViewById<TextInputEditText>(R.id.etPassword)
         val btnLogin = findViewById<Button>(R.id.btnLogin)
-        val btnRegistrar = findViewById<Button>(R.id.btnRegistrar)
+        //val btnRegistrar = findViewById<Button>(R.id.btnRegistrar)
 
         btnLogin.setOnClickListener {
             val email = etEmail.text.toString().trim()
@@ -43,12 +39,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        btnRegistrar.setOnClickListener {
+        /*btnRegistrar.setOnClickListener {
             val intent = Intent(this, Registro::class.java)
             startActivity(intent)
             overridePendingTransition(0, 0)
             finish()
-        }
+        }*/
     }
 
     private fun ejecutarLogin(email: String, contrasenia: String) {
@@ -64,6 +60,7 @@ class MainActivity : AppCompatActivity() {
                         val token = loginResponse.token
                         val nombreUsuario = loginResponse.usuario.nombre
                         val correoUsuario = loginResponse.usuario.email
+                        val rolUsuario = loginResponse.usuario.rol
                         // Extraemos el ID numérico real desde el objeto usuario del DTO
                         val idUsuarioReal = loginResponse.usuario.usuarioId
 
@@ -76,6 +73,7 @@ class MainActivity : AppCompatActivity() {
                             .putInt("USUARIO_ID", idUsuarioReal) // <-- Aquí queda guardado permanentemente
                             .putString("USER_NAME", nombreUsuario)
                             .putString("USER_EMAIL", correoUsuario)
+                            .putString("USER_ROL", rolUsuario)
                             .apply()
 
                         // Redirigimos a la pantalla de Inicio (ya no dependemos de arrastrar extras)

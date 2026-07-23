@@ -38,7 +38,6 @@ class Registro : AppCompatActivity() {
         etEmail = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
         btnRegistrar = findViewById(R.id.btnRegistrar)
-        btnRegresarLogin = findViewById(R.id.btnRegresarLogin)
 
         btnRegistrar.setOnClickListener {
             val nombre = etNombre.text.toString().trim()
@@ -51,18 +50,6 @@ class Registro : AppCompatActivity() {
             } else {
                 registroUsuario(nombre, email, password)
             }
-        }
-
-        // LÓGICA CORREGIDA: Transición instantánea idéntica al Login
-        btnRegresarLogin.setOnClickListener {
-            val intent = Intent(this@Registro, MainActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            startActivity(intent)
-
-            // Quitamos la animación brusca de Android para que combine con el Login
-            overridePendingTransition(0, 0)
-
-            finish()
         }
     }
 

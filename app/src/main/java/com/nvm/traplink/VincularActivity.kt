@@ -79,12 +79,6 @@ class VincularActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_vincular)
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
-
         val ivToggleIcon = findViewById<ImageView>(R.id.ivToggleTemaIcon)
         ivToggleIcon.setImageResource(if (isDarkThemeActive) R.drawable.ic_sun else R.drawable.ic_moon)
 

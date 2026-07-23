@@ -21,8 +21,8 @@
     <style name="TrapLink" parent="Base.Theme.TrapLink" />
 
     <style name="Widget.TrapLink.Button.Primary" parent="Widget.Material3.Button">
-        <item name="backgroundTint">@color/primary</item>
-        <item name="android:textColor">@color/on_primary</item>
+        <item name="backgroundTint">@color/header_gradient_end</item>
+        <item name="android:textColor">@color/primary</item>
         <item name="cornerRadius">12dp</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:letterSpacing">0</item>

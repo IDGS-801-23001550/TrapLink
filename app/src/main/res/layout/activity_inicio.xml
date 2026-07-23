@@ -17,12 +17,13 @@
         <LinearLayout
             android:id="@+id/headerContainer"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="265dp"
             android:background="@drawable/bg_header_gradient"
             android:orientation="vertical"
             android:paddingHorizontal="20dp"
             android:paddingTop="20dp"
             android:paddingBottom="24dp"
+            android:clipToOutline="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
@@ -30,6 +31,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -55,7 +57,7 @@
                     android:layout_marginStart="10dp"
                     android:layout_weight="1"
                     android:text="@string/app_name"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/text_primary"
                     android:textSize="19sp"
                     android:textStyle="bold" />
 
@@ -100,7 +102,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:text="¡Hola de nuevo!"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/text_primary"
                 android:textSize="24sp"
                 android:textStyle="bold" />
 
@@ -109,7 +111,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="Esto es lo que pasa con tus nodos hoy"
-                android:textColor="#CFE8DD"
+                android:textColor="@color/text_primary"
                 android:textSize="13sp" />
 
             <LinearLayout

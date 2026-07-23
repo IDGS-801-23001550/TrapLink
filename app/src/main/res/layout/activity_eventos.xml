@@ -12,12 +12,13 @@
     <LinearLayout
         android:id="@+id/headerContainer"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="265dp"
         android:background="@drawable/bg_header_gradient"
         android:orientation="vertical"
         android:paddingHorizontal="20dp"
         android:paddingTop="20dp"
-        android:paddingBottom="20dp"
+        android:paddingBottom="24dp"
+        android:clipToOutline="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -25,6 +26,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
@@ -50,7 +52,7 @@
                 android:layout_marginStart="10dp"
                 android:layout_weight="1"
                 android:text="@string/app_name"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/text_primary"
                 android:textSize="19sp"
                 android:textStyle="bold" />
 
@@ -94,7 +96,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:text="Analítica"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/text_primary"
             android:textSize="24sp"
             android:textStyle="bold" />
 
@@ -103,7 +105,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:text="Desempeño y actividad de tus nodos"
-            android:textColor="#CFE8DD"
+            android:textColor="@color/text_primary"
             android:textSize="13sp" />
     </LinearLayout>
 
@@ -159,8 +161,8 @@
 
         <!-- Item skeleton -->
         <include
-            layout="@layout/item_skeleton_trampa"
-            android:layout_marginTop="24dp" />
+            layout="@layout/item_skeleton_trampa"/>
+            <!--android:layout_marginTop="24dp" /> -->
         <include layout="@layout/item_skeleton_trampa" />
 
     </LinearLayout>
@@ -413,7 +415,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="Reales"
                                 android:textColor="@color/text_body_grey"
-                                android:textSize="11sp" />
+                                android:textSize="15sp" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -434,7 +436,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="Falsos"
                                 android:textColor="@color/text_body_grey"
-                                android:textSize="11sp" />
+                                android:textSize="15sp" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -455,7 +457,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="Pendientes"
                                 android:textColor="@color/text_body_grey"
-                                android:textSize="11sp" />
+                                android:textSize="15sp" />
                         </LinearLayout>
                     </LinearLayout>
 
@@ -467,7 +469,7 @@
                         android:gravity="center"
                         android:text="Actualizado hace un momento"
                         android:textColor="@color/text_hint"
-                        android:textSize="10sp" />
+                        android:textSize="15sp" />
 
                 </LinearLayout>
 

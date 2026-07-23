@@ -1,33 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Dashboard de Nodos - modo oscuro -->
-    <color name="header_bg">#0D1117</color>
-    <color name="accent_neon">#2EE6A6</color>
-    <color name="accent_neon_soft">#16342A</color>
-    <color name="app_bg_light">#0B1220</color>
-    <color name="card_bg">#161D2E</color>
-    <color name="card_border">#232C42</color>
-    <color name="nav_bg">#0F1524</color>
-    <color name="nav_icon_inactive">#5C6678</color>
-    <color name="text_title_dark">#F2F5F3</color>
-    <color name="text_body_grey">#9AA5B4</color>
+    <!-- ===== FONDO Y HEADER (PROFUNDO CON BASE #000000) ===== -->
+    <color name="header_bg">#12100F</color>
+    <color name="app_bg_light">#1A1817</color>
+    <color name="card_bg">#242120</color>
+    <color name="card_border">#383432</color>
+    <color name="nav_bg">#1A1817</color>
 
-    <!-- Toggle de tema -->
-    <color name="theme_toggle_bg">#1B2333</color>
-    <color name="theme_toggle_icon">#F2C744</color>
+    <!-- ===== TEXTOS Y NAVEGACIÓN ===== -->
+    <color name="text_title_dark">#FFFFFF</color>
+    <color name="text_body_grey">#B5AEA9</color>
+    <color name="nav_icon_inactive">#736A65</color>
 
-    <!-- Estados -->
-    <color name="status_disconnected">#5C6678</color>
+    <!-- ===== ACENTOS Y BOTONES (#FFB700) ===== -->
+    <color name="accent_neon">#FFB700</color>
+    <color name="accent_neon_soft">#3D3000</color>
+    <color name="theme_toggle_bg">#242120</color>
+    <color name="theme_toggle_icon">#FFB700</color>
 
-    <color name="header_gradient_start">#0B1220</color>
-    <color name="header_gradient_end">#16342A</color>
-    <color name="stat_card_bg">#161D2E</color>
-    <color name="shadow_soft">#33000000</color>
+    <!-- ===== GRADIENTES Y TARJETAS ===== -->
+    <color name="header_gradient_start">#12100F</color>
+    <color name="header_gradient_end">#2B2725</color>
+    <color name="stat_card_bg">#242120</color>
+    <color name="shadow_soft">#66000000</color>
 
-    <color name="timeline_line">#232C42</color>
-
-    <color name="skeleton_base">#232C42</color>
-
-    <color name="input_bg">#161D2E</color>
-
+    <!-- ===== ESTADOS E INSUMOS ===== -->
+    <color name="status_disconnected">#736A65</color>
+    <color name="timeline_line">#383432</color>
+    <color name="skeleton_base">#2E2A28</color>
+    <color name="input_bg">#242120</color>
 </resources>

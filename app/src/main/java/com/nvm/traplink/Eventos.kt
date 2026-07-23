@@ -64,12 +64,6 @@ class Eventos : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_eventos)
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
-
         val ivToggleIcon = findViewById<ImageView>(R.id.ivToggleTemaIcon)
         ivToggleIcon.setImageResource(if (isDarkThemeActive) R.drawable.ic_sun else R.drawable.ic_moon)
 
@@ -338,9 +332,9 @@ class Eventos : AppCompatActivity() {
     private fun actualizarDatosGrafica(capturas: Float, falsos: Float, sinRevisar: Float) {
         val entries = ArrayList<PieEntry>()
 
-        if (capturas > 0) entries.add(PieEntry(capturas, "Reales"))
-        if (falsos > 0) entries.add(PieEntry(falsos, "Falsos"))
-        if (sinRevisar > 0) entries.add(PieEntry(sinRevisar, "Pendientes"))
+        if (capturas > 0) entries.add(PieEntry(capturas, ""))
+        if (falsos > 0) entries.add(PieEntry(falsos, ""))
+        if (sinRevisar > 0) entries.add(PieEntry(sinRevisar, ""))
 
         if (entries.isEmpty()) entries.add(PieEntry(1f, "Sin eventos"))
 
