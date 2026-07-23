@@ -8,17 +8,17 @@
     android:background="@color/app_bg_light"
     tools:context=".DetallesCuenta">
 
-    <!-- ===================== HEADER CON GRADIENTE ===================== -->
+    <!-- ===================== HEADER CON GRADIENTE (Mantenido intacto) ===================== -->
     <LinearLayout
         android:id="@+id/headerContainer"
         android:layout_width="0dp"
         android:layout_height="240dp"
         android:background="@drawable/bg_header_gradient"
+        android:clipToOutline="true"
         android:orientation="vertical"
         android:paddingHorizontal="20dp"
         android:paddingTop="20dp"
         android:paddingBottom="20dp"
-        android:clipToOutline="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -42,8 +42,7 @@
                 <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="@mipmap/ic_traplink">
-                </FrameLayout>
+                    android:background="@mipmap/ic_traplink" />
 
             </androidx.cardview.widget.CardView>
 
@@ -56,23 +55,6 @@
                 android:textColor="@color/text_primary"
                 android:textSize="19sp"
                 android:textStyle="bold" />
-
-            <FrameLayout
-                android:id="@+id/btnLogout"
-                android:layout_width="34dp"
-                android:layout_height="34dp"
-                android:layout_marginEnd="8dp"
-                android:background="@drawable/bg_theme_toggle"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?android:attr/selectableItemBackgroundBorderless">
-
-                <ImageView
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_user" />
-            </FrameLayout>
 
             <FrameLayout
                 android:id="@+id/btnToggleTema"
@@ -92,7 +74,7 @@
             </FrameLayout>
         </LinearLayout>
 
-        <!-- Título de la sección integrado en el Header -->
+        <!-- Título de la sección -->
         <TextView
             android:id="@+id/tvScreenTitle"
             android:layout_width="wrap_content"
@@ -103,18 +85,18 @@
             android:textSize="24sp"
             android:textStyle="bold" />
 
-        <!-- Subtítulo de la sección integrado en el Header -->
+        <!-- Subtítulo de la sección -->
         <TextView
             android:id="@+id/tvScreenSubtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Gestiona y actualiza los datos de tu perfil"
+            android:text="Configura tu perfil y preferencias del sistema"
             android:textColor="@color/text_primary"
             android:textSize="13sp" />
     </LinearLayout>
 
-    <!-- ===================== CONTENEDOR FORMULARIO (con Scroll) ===================== -->
+    <!-- ===================== LISTA DE OPCIONES / BOTONES DE NAVEGACIÓN ===================== -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -128,127 +110,228 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingBottom="24dp">
+            android:paddingHorizontal="20dp"
+            android:paddingBottom="30dp">
 
-            <!-- Tarjeta del Formulario inspirada en el Login -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardForm"
+            <!-- Editar Perfil -->
+            <LinearLayout
+                android:id="@+id/btnEditarPerfil"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="20dp"
-                android:layout_marginTop="16dp"
-                app:cardBackgroundColor="@color/background"
-                app:cardCornerRadius="28dp"
-                app:cardElevation="4dp">
+                android:layout_marginTop="20dp"
+                android:background="@drawable/bg_card_node"
+                android:clickable="true"
+                android:elevation="6dp"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <!-- Ícono -->
+                <FrameLayout
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_radar_center"
+                    android:elevation="2dp">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_user"
+                        app:tint="#FFFFFF" />
+                </FrameLayout>
+
+                <!-- Textos -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Editar Perfil"
+                        android:textColor="@color/text_title_dark"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Nombre, correo y datos de contacto"
+                        android:textColor="@color/text_body_grey"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- Flecha indicadora -->
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_back"
+                    android:rotation="180"
+                    app:tint="@color/text_body_grey" />
+            </LinearLayout>
+
+            <!-- Registar Cuenta(Disponible solo para admin) -->
+            <LinearLayout
+                android:id="@+id/btnRegistrar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_card_node"
+                android:clickable="true"
+                android:elevation="4dp"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <FrameLayout
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_radar_center"
+                    android:elevation="2dp">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_add"
+                        app:tint="#FFFFFF" />
+                </FrameLayout>
 
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_card_node"
-                    android:orientation="vertical"
-                    android:padding="24dp">
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Información Personal"
-                        android:textSize="18sp"
+                        android:text="Registrar Nuevo Usuario"
+                        android:textColor="@color/text_title_dark"
+                        android:textSize="15sp"
                         android:textStyle="bold" />
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginBottom="20dp"
-                        android:background="@color/divider" />
-
-                    <!-- Nombre de Usuario -->
-                    <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.TrapLink.TextInputLayout"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
-                        android:hint="Nombre Completo"
-                        app:boxCornerRadiusTopStart="14dp"
-                        app:boxCornerRadiusTopEnd="14dp"
-                        app:boxCornerRadiusBottomStart="14dp"
-                        app:boxCornerRadiusBottomEnd="14dp"
-                        app:startIconTint="@color/primary">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etNombre"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="textPersonName"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <!-- Correo Electrónico -->
-                    <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.TrapLink.TextInputLayout"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="24dp"
-                        android:hint="Correo Electrónico"
-                        android:enabled="false"
-                        app:boxCornerRadiusTopStart="14dp"
-                        app:boxCornerRadiusTopEnd="14dp"
-                        app:boxCornerRadiusBottomStart="14dp"
-                        app:boxCornerRadiusBottomEnd="14dp"
-                        app:startIconTint="@color/primary">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etEmail"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="textEmailAddress"/>
-                    </com.google.android.material.textfield.TextInputLayout>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Seguridad"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginBottom="20dp"
-                        android:background="@color/divider" />
-
-                    <!-- Nueva Contraseña -->
-                    <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.TrapLink.TextInputLayout"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="24dp"
-                        android:hint="Nueva Contraseña"
-                        app:boxCornerRadiusTopStart="14dp"
-                        app:boxCornerRadiusTopEnd="14dp"
-                        app:boxCornerRadiusBottomStart="14dp"
-                        app:boxCornerRadiusBottomEnd="14dp"
-                        app:endIconMode="password_toggle"
-                        app:endIconTint="@color/primary">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etPassword"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="textPassword"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <!-- Botón Guardar Cambios -->
-                    <Button
-                        android:id="@+id/btnGuardarCambios"
-                        style="@style/Widget.TrapLink.Button.Primary"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="12dp"
-                        android:text="Guardar Cambios" />
-
+                        android:layout_marginTop="2dp"
+                        android:text="Crear Nuevo Usuario"
+                        android:textColor="@color/text_body_grey"
+                        android:textSize="12sp" />
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_back"
+                    android:rotation="180"
+                    app:tint="@color/text_body_grey" />
+            </LinearLayout>
+
+            <!-- Notificaciones y Alertas -->
+            <LinearLayout
+                android:id="@+id/btnNotificaciones"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_card_node"
+                android:clickable="true"
+                android:elevation="4dp"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <FrameLayout
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_radar_center"
+                    android:elevation="2dp">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_signal_node"
+                        app:tint="#FFFFFF" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Notificaciones"
+                        android:textColor="@color/text_title_dark"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Alertas de capturas y batería baja"
+                        android:textColor="@color/text_body_grey"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_back"
+                    android:rotation="180"
+                    app:tint="@color/text_body_grey" />
+            </LinearLayout>
+
+            <!-- OPTION 4: Cerrar Sesión (Acción destructiva / Destacada) -->
+            <LinearLayout
+                android:id="@+id/btnCerrarSesion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:background="@drawable/bg_alert_card"
+                android:clickable="true"
+                android:elevation="2dp"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_false_positive"
+                    app:tint="#D32F2F" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:text="Cerrar Sesión"
+                    android:textColor="#D32F2F"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 

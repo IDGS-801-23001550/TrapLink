@@ -2,34 +2,18 @@ package com.nvm.traplink
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.Toast
+import android.widget.LinearLayout
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.lifecycleScope
-import com.google.android.material.textfield.TextInputEditText
-import com.nvm.traplink.data.ActualizarPerfilDto
-import com.nvm.traplink.data.RetrofitClient
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class DetallesCuenta : AppCompatActivity() {
-
-    private lateinit var etNombre: TextInputEditText
-    private lateinit var etEmail: TextInputEditText
-    private lateinit var etPassword: TextInputEditText
-    private lateinit var btnGuardarCambios: Button
-
-    // Instancia de SharedPreferences idéntica a la pantalla de Inicio
     private val prefs by lazy { getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
         // 1. Aplicar el tema guardado ANTES de inflar vistas
         val isDark = prefs.getBoolean("dark_mode", false)
         AppCompatDelegate.setDefaultNightMode(
@@ -41,11 +25,10 @@ class DetallesCuenta : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_detalles_cuenta)
 
-        // Inicialización de componentes
-        etNombre = findViewById(R.id.etNombre)
-        etEmail = findViewById(R.id.etEmail)
-        etPassword = findViewById(R.id.etPassword)
-        btnGuardarCambios = findViewById(R.id.btnGuardarCambios)
+        val btnEditarPerfil = findViewById<LinearLayout>(R.id.btnEditarPerfil)
+        val btnRegistrar = findViewById<LinearLayout>(R.id.btnRegistrar)
+        val btnNotificaciones = findViewById<LinearLayout>(R.id.btnNotificaciones)
+        val btnCerrarSesion = findViewById<LinearLayout>(R.id.btnCerrarSesion)
 
         // Configurar el icono del Toggle de Tema según el modo actual
         val ivToggleIcon = findViewById<ImageView>(R.id.ivToggleTemaIcon)
@@ -63,116 +46,18 @@ class DetallesCuenta : AppCompatActivity() {
             recreate()
         }
 
-        // Cargar datos actuales guardados de forma automática
-        cargarDatosLocales()
-
-        btnGuardarCambios.setOnClickListener {
-            val nuevoNombre = etNombre.text.toString().trim()
-            val nuevoEmail = etEmail.text.toString().trim()
-
-            if (nuevoNombre.isEmpty()) {
-                Toast.makeText(this, "El nombre no puede estar vacío", Toast.LENGTH_SHORT).show()
-            } else {
-                actualizarPerfilServidor(nuevoNombre, nuevoEmail)
-            }
+        btnEditarPerfil.setOnClickListener {
+            val intent = Intent(this, EditarPerfil::class.java)
+            startActivity(intent)
         }
 
-        // Vinculamos el contenedor del botón de usuario
-        val btnLogout = findViewById<FrameLayout>(R.id.btnLogout)
-        btnLogout.setOnClickListener { view ->
-            val popup = androidx.appcompat.widget.PopupMenu(this, view)
-            popup.menuInflater.inflate(R.menu.menu_usuario, popup.menu)
-
-            popup.setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    R.id.menu_detalles -> {
-                        Toast.makeText(this, "Ya te encuentras en tu perfil", Toast.LENGTH_SHORT).show()
-                        true
-                    }
-                    R.id.menu_cerrar_sesion -> {
-                        CerrarSesion.cerrarSesion(this)
-                        true
-                    }
-                    else -> false
-                }
-            }
-            popup.show()
+        btnRegistrar.setOnClickListener {
+            val intent = Intent(this, Registro::class.java)
+            startActivity(intent)
         }
-    }
 
-    /**
-     * Recupera el Nombre y el Email directamente del almacenamiento persistente
-     * donde se guardaron durante el inicio de sesión.
-     */
-    private fun cargarDatosLocales() {
-        // Obtenemos los valores guardados. Si no existen, colocamos valores por defecto seguros.
-        val nombreGuardado = prefs.getString("USER_NAME", "Usuario de TrapLink")
-        val emailGuardado = prefs.getString("USER_EMAIL", "correo@guardado.com")
-
-        // Los asignamos directamente a los EditTexts del XML
-        etNombre.setText(nombreGuardado)
-        etEmail.setText(emailGuardado)
-    }
-
-    private fun actualizarPerfilServidor(nombre: String, email: String) {
-        btnGuardarCambios.isEnabled = false
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                // Recuperar el Token JWT almacenado en el login
-                val token = prefs.getString("AUTH_TOKEN", "") ?: ""
-
-                if (token.isEmpty()) {
-                    withContext(Dispatchers.Main) {
-                        btnGuardarCambios.isEnabled = true
-                        Toast.makeText(this@DetallesCuenta, "Sesión no válida o expirada.", Toast.LENGTH_LONG).show()
-                    }
-                    return@launch
-                }
-
-                val tokenCompleto = "Bearer $token"
-
-                // Construimos el DTO con el nombre, email y dejamos los campos de cliente opcionales como nulls
-                val perfilDto = ActualizarPerfilDto(
-                    nombre = nombre,
-                    email = email,
-                    tokenPushFCM = null,
-                    empresa = null,
-                    telefono = null,
-                    direccion = null
-                )
-
-                // Llamar al endpoint PUT "perfil" del backend
-                val response = RetrofitClient.authService.actualizarPerfil(tokenCompleto, perfilDto)
-
-                withContext(Dispatchers.Main) {
-                    btnGuardarCambios.isEnabled = true
-
-                    if (response.isSuccessful && response.body() != null) {
-                        val mensajeApi = response.body()!!.mensaje
-                        Toast.makeText(this@DetallesCuenta, mensajeApi, Toast.LENGTH_LONG).show()
-
-                        // Actualizar localmente SharedPreferences para que persista el nuevo nombre en toda la app
-                        prefs.edit().putString("USER_NAME", nombre).apply()
-
-                        finish() // Regresa a la pantalla anterior tras guardar con éxito
-                    } else {
-                        val errorBody = response.errorBody()?.string()
-                        val mensajeError = when (response.code()) {
-                            400 -> "El correo electrónico ya se encuentra registrado por otro usuario o el formato es incorrecto."
-                            401 -> "Sesión no autorizada."
-                            else -> "No se pudo actualizar el perfil (${response.code()})"
-                        }
-                        Toast.makeText(this@DetallesCuenta, mensajeError, Toast.LENGTH_LONG).show()
-                        android.util.Log.e("API_ERROR", "Código: ${response.code()} | Body: $errorBody")
-                    }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    btnGuardarCambios.isEnabled = true
-                    Toast.makeText(this@DetallesCuenta, "Error de conexión: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
-                }
-            }
+        btnCerrarSesion.setOnClickListener { view ->
+            CerrarSesion.cerrarSesion(this)
         }
     }
 }

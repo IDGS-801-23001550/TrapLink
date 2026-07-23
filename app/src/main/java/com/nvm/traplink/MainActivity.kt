@@ -25,7 +25,6 @@ class MainActivity : AppCompatActivity() {
         val etEmail = findViewById<TextInputEditText>(R.id.etEmail)
         val etPassword = findViewById<TextInputEditText>(R.id.etPassword)
         val btnLogin = findViewById<Button>(R.id.btnLogin)
-        //val btnRegistrar = findViewById<Button>(R.id.btnRegistrar)
 
         btnLogin.setOnClickListener {
             val email = etEmail.text.toString().trim()
@@ -38,13 +37,6 @@ class MainActivity : AppCompatActivity() {
                 ejecutarLogin(email, password)
             }
         }
-
-        /*btnRegistrar.setOnClickListener {
-            val intent = Intent(this, Registro::class.java)
-            startActivity(intent)
-            overridePendingTransition(0, 0)
-            finish()
-        }*/
     }
 
     private fun ejecutarLogin(email: String, contrasenia: String) {

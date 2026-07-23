@@ -3,9 +3,12 @@ package com.nvm.traplink
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
@@ -24,20 +27,43 @@ class Registro : AppCompatActivity() {
     private lateinit var btnRegistrar: Button
     private lateinit var btnRegresarLogin: Button
 
+    // Instancia de SharedPreferences idéntica a la pantalla de Inicio
+    private val prefs by lazy { getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        // 1. Aplicar el tema guardado ANTES de inflar vistas
+        val isDark = prefs.getBoolean("dark_mode", false)
+        AppCompatDelegate.setDefaultNightMode(
+            if (isDark) AppCompatDelegate.MODE_NIGHT_YES
+            else AppCompatDelegate.MODE_NIGHT_NO
+        )
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_registro)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
+
 
         etNombre = findViewById(R.id.etNombre)
         etEmail = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
         btnRegistrar = findViewById(R.id.btnRegistrar)
+
+        // Configurar el icono del Toggle de Tema según el modo actual
+        val ivToggleIcon = findViewById<ImageView>(R.id.ivToggleTemaIcon)
+        val btnToggleTema = findViewById<FrameLayout>(R.id.btnToggleTema)
+        ivToggleIcon.setImageResource(if (isDark) R.drawable.ic_sun else R.drawable.ic_moon)
+
+        btnToggleTema.setOnClickListener {
+            val nuevoModoOscuro = !prefs.getBoolean("dark_mode", false)
+            prefs.edit().putBoolean("dark_mode", nuevoModoOscuro).apply()
+
+            AppCompatDelegate.setDefaultNightMode(
+                if (nuevoModoOscuro) AppCompatDelegate.MODE_NIGHT_YES
+                else AppCompatDelegate.MODE_NIGHT_NO
+            )
+            recreate()
+        }
 
         btnRegistrar.setOnClickListener {
             val nombre = etNombre.text.toString().trim()
@@ -50,6 +76,28 @@ class Registro : AppCompatActivity() {
             } else {
                 registroUsuario(nombre, email, password)
             }
+        }
+
+        // Vinculamos el contenedor del botón de usuario
+        val btnLogout = findViewById<FrameLayout>(R.id.btnLogout)
+        btnLogout.setOnClickListener { view ->
+            val popup = androidx.appcompat.widget.PopupMenu(this, view)
+            popup.menuInflater.inflate(R.menu.menu_usuario, popup.menu)
+
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.menu_detalles -> {
+                        Toast.makeText(this, "Ya te encuentras en tu perfil", Toast.LENGTH_SHORT).show()
+                        true
+                    }
+                    R.id.menu_cerrar_sesion -> {
+                        CerrarSesion.cerrarSesion(this)
+                        true
+                    }
+                    else -> false
+                }
+            }
+            popup.show()
         }
     }
 
