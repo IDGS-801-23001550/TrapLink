@@ -12,7 +12,7 @@
     <LinearLayout
         android:id="@+id/headerContainer"
         android:layout_width="0dp"
-        android:layout_height="265dp"
+        android:layout_height="185dp"
         android:background="@drawable/bg_header_gradient"
         android:orientation="vertical"
         android:paddingHorizontal="20dp"
