@@ -11,6 +11,12 @@ interface TrapLinkApiService {
         @Body request: VincularRequestDto
     ): Response<Map<String, String>>
 
+    @PUT("Dispositivos/desvincular")
+    suspend fun desvincularDispositivo(
+        @Header("Authorization") token: String,
+        @Body request: DesvincularRequestDto
+    ): Response<DesvincularResponseDto>
+
     @GET("Dispositivos/mis-dispositivos")
     suspend fun getMisDispositivos(
         @Header("Authorization") token: String

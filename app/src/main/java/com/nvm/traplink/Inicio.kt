@@ -237,7 +237,7 @@ class Inicio : AppCompatActivity() {
                         // Actualizar estadísticas
                         tvStatTotal.text = listaTrampas.size.toString()
                         tvStatActivos.text = listaTrampas.count { it.estado.contains("Activ", ignoreCase = true) }.toString()
-                        tvStatAlertas.text = listaTrampas.count { it.estado.contains("Captura", ignoreCase = true) }.toString()
+                        tvStatAlertas.text = listaTrampas.count { it.estado.contains("detonada", ignoreCase = true) }.toString()
 
                         if (!yaSeAnimaronStats) {
                             animarEntradaStats()
@@ -261,7 +261,7 @@ class Inicio : AppCompatActivity() {
                         }
 
                         listaTrampas.forEach { trampa ->
-                            if (trampa.estado.contains("Captura", ignoreCase = true)) {
+                            if (trampa.estado.contains("detonada", ignoreCase = true)) {
                                 lanzarNotificacionSistema(this@Inicio, "🚨 Captura Detectada", "El dispositivo ${trampa.numeroSerie} registró actividad.")
                             }
                         }

@@ -24,6 +24,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.nvm.traplink.data.ConfirmarEventoDto
+import com.nvm.traplink.data.DesvincularRequestDto
 import com.nvm.traplink.data.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -233,6 +234,13 @@ class Detalles : AppCompatActivity() {
             }
         } else {
             Log.w("TrapLinkDebug", "No se consumieron las APIs. dispositivoId: $dispositivoId, token vacío: ${tokenGuardado.isEmpty()}")
+        }
+
+        // Dentro de onCreate() o la función donde inicializas las vistas de Detalles.kt:
+        val btnDesvincular = findViewById<LinearLayout>(R.id.btnDesvincular)
+
+        btnDesvincular.setOnClickListener {
+            mostrarDialogoConfirmacionDesvincular()
         }
 
         // Manejo de Comandos WS
@@ -445,5 +453,63 @@ class Detalles : AppCompatActivity() {
             }
         }
         client.newWebSocket(request, webSocketListener)
+    }
+
+    private fun mostrarDialogoConfirmacionDesvincular() {
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("Desvincular Dispositivo")
+            .setMessage("¿Estás seguro de que deseas desvincular esta trampa? Dejará de enviar lecturas a tu cuenta.")
+            .setPositiveButton("Desvincular") { _, _ ->
+                ejecutarDesvinculacion()
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun ejecutarDesvinculacion() {
+        val prefs = getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE)
+        val token = prefs.getString("AUTH_TOKEN", "") ?: ""
+
+        // Obtenemos el número de serie cargado previamente en el Intent o variable global
+        val numeroSerie = intent.getStringExtra("EXTRA_NOMBRE") ?: ""
+
+        if (token.isEmpty() || numeroSerie.isEmpty()) {
+            Toast.makeText(this, "Información inválida para desvincular", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val tokenCompleto = "Bearer $token"
+                val request = DesvincularRequestDto(numeroSerie = numeroSerie)
+
+                val response = RetrofitClient.trapLinkService.desvincularDispositivo(tokenCompleto, request)
+
+                withContext(Dispatchers.Main) {
+                    if (response.isSuccessful && response.body() != null) {
+                        val mensajeExitosa = response.body()?.status ?: "Dispositivo desvinculado con éxito"
+                        Toast.makeText(this@Detalles, mensajeExitosa, Toast.LENGTH_LONG).show()
+
+                        // Regresamos a la pantalla de Inicio para que refresque la lista de nodos
+                        val intent = Intent(this@Detalles, Inicio::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                        startActivity(intent)
+                        finish()
+                    } else {
+                        val mensajeError = when (response.code()) {
+                            400 -> "La trampa no está vinculada."
+                            403 -> "No tienes permiso para desvincular esta trampa."
+                            404 -> "El número de serie no existe."
+                            else -> "Error al desvincular (${response.code()})"
+                        }
+                        Toast.makeText(this@Detalles, mensajeError, Toast.LENGTH_LONG).show()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@Detalles, "Error de red: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
 }

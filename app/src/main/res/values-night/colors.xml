@@ -8,6 +8,7 @@
     <color name="nav_bg">#1A1817</color>
 
     <!-- ===== TEXTOS Y NAVEGACIÓN ===== -->
+    <color name="text_primary">#FFFFFF</color>
     <color name="text_title_dark">#FFFFFF</color>
     <color name="text_body_grey">#B5AEA9</color>
     <color name="nav_icon_inactive">#736A65</color>

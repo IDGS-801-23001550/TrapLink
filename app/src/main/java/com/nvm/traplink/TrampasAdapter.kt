@@ -35,7 +35,9 @@ class TrampasAdapter(
                 holder.tvEstadoTrampa.setBackgroundResource(R.drawable.bg_chip_offline)
                 holder.tvEstadoTrampa.setTextColor(ContextCompat.getColor(context, R.color.chip_text_offline))
             }
-            trampa.estado.contains("Captura", ignoreCase = true) || trampa.estado.contains("Alerta", ignoreCase = true) -> {
+            trampa.estado.contains("detonada", ignoreCase = true) ||
+                    trampa.estado.contains("Captura", ignoreCase = true) ||
+                    trampa.estado.contains("Alerta", ignoreCase = true) -> {
                 holder.tvEstadoTrampa.text = "Captura detectada"
                 holder.tvEstadoTrampa.setBackgroundResource(R.drawable.bg_chip_capture)
                 holder.tvEstadoTrampa.setTextColor(ContextCompat.getColor(context, R.color.chip_text_capture))
