@@ -8,6 +8,8 @@ import android.widget.LinearLayout
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 
 class DetallesCuenta : AppCompatActivity() {
     private val prefs by lazy { getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE) }
@@ -24,6 +26,14 @@ class DetallesCuenta : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_detalles_cuenta)
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            // Solo el bottom recibe padding — el top se queda en 0
+            // para que el header siga extendiéndose bajo la barra de estado
+            v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom)
+            insets
+        }
 
         val btnEditarPerfil = findViewById<LinearLayout>(R.id.btnEditarPerfil)
         val btnRegistrar = findViewById<LinearLayout>(R.id.btnRegistrar)

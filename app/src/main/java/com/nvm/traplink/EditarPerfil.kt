@@ -39,6 +39,14 @@ class EditarPerfil : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_editar_perfil)
 
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            // Solo el bottom recibe padding — el top se queda en 0
+            // para que el header siga extendiéndose bajo la barra de estado
+            v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom)
+            insets
+        }
+
         // Inicialización de componentes
         etNombre = findViewById(R.id.etNombre)
         etEmail = findViewById(R.id.etEmail)

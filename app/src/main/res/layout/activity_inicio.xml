@@ -209,20 +209,60 @@
             </LinearLayout>
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvScreenTitle"
+        <LinearLayout
+            android:id="@+id/screenTitleRow"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
             android:layout_marginTop="24dp"
             android:layout_marginEnd="20dp"
-            android:text="Tus Dispositivos"
-            android:textColor="@color/text_title_dark"
-            android:textSize="18sp"
-            android:textStyle="bold"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/headerContainer" />
+            app:layout_constraintTop_toBottomOf="@id/headerContainer">
+
+            <View
+                android:layout_width="4dp"
+                android:layout_height="18dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_title_accent" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Tus Dispositivos"
+                android:textColor="@color/text_title_dark"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <!--<TextView
+                android:id="@+id/tvDeviceCountBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_count_badge"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="0 nodos"
+                android:textColor="@color/accent_neon"
+                android:textSize="11sp"
+                android:textStyle="bold" />-->
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvScreenSubtitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="20dp"
+            android:text="Administra y monitorea tus nodos conectados"
+            android:textColor="@color/text_body_grey"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/screenTitleRow" />
 
         <!-- ===================== SKELETON LOADER (primera carga) ===================== -->
         <LinearLayout
@@ -236,7 +276,7 @@
             app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvScreenTitle"
+            app:layout_constraintTop_toBottomOf="@id/tvScreenSubtitle"
             tools:visibility="visible">
 
             <include layout="@layout/item_skeleton_trampa" />
@@ -255,7 +295,7 @@
             app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvScreenTitle">
+            app:layout_constraintTop_toBottomOf="@id/tvScreenSubtitle">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvDispositivos"
@@ -278,7 +318,7 @@
             app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvScreenTitle"
+            app:layout_constraintTop_toBottomOf="@id/tvScreenSubtitle"
             tools:visibility="visible">
 
             <LinearLayout
@@ -322,20 +362,26 @@
                         android:background="@drawable/bg_stat_card"
                         android:gravity="center"
                         android:orientation="vertical"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="14dp">
 
-                        <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:src="@drawable/ic_signal_node"
-                            app:tint="@color/accent_neon" />
+                        <FrameLayout
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/bg_benefit_badge">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_benefit_alertas" />
+                        </FrameLayout>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
+                            android:layout_marginTop="8dp"
                             android:gravity="center"
-                            android:text="Alertas en tiempo real"
+                            android:text="Alertas tiempo real"
                             android:textColor="@color/text_body_grey"
                             android:textSize="10sp"
                             android:textStyle="bold" />
@@ -349,18 +395,24 @@
                         android:background="@drawable/bg_stat_card"
                         android:gravity="center"
                         android:orientation="vertical"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="14dp">
 
-                        <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:src="@drawable/ic_nav_eventos"
-                            app:tint="@color/accent_neon" />
+                        <FrameLayout
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/bg_benefit_badge">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_benefit_historial" />
+                        </FrameLayout>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
+                            android:layout_marginTop="8dp"
                             android:gravity="center"
                             android:text="Historial de capturas"
                             android:textColor="@color/text_body_grey"
@@ -375,24 +427,31 @@
                         android:background="@drawable/bg_stat_card"
                         android:gravity="center"
                         android:orientation="vertical"
-                        android:paddingVertical="12dp">
+                        android:paddingVertical="14dp">
 
-                        <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:src="@drawable/ic_notification"
-                            app:tint="@color/accent_neon" />
+                        <FrameLayout
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/bg_benefit_badge">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_benefit_push" />
+                        </FrameLayout>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
+                            android:layout_marginTop="8dp"
                             android:gravity="center"
                             android:text="Notificaciones push"
                             android:textColor="@color/text_body_grey"
                             android:textSize="10sp"
                             android:textStyle="bold" />
                     </LinearLayout>
+
                 </LinearLayout>
 
                 <!-- ===== TIMELINE CONECTADO ===== -->
@@ -406,7 +465,7 @@
                         android:layout_width="2dp"
                         android:layout_height="0dp"
                         android:background="@color/timeline_line"
-                        app:layout_constraintBottom_toBottomOf="@id/dot3"
+                        app:layout_constraintBottom_toBottomOf="@id/dot5"
                         app:layout_constraintStart_toStartOf="@id/dot1"
                         app:layout_constraintEnd_toEndOf="@id/dot1"
                         app:layout_constraintTop_toTopOf="@id/dot1" />
@@ -435,7 +494,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
-                        android:text="Enciende el nodo"
+                        android:text="Enciende la trampa"
                         android:textColor="@color/text_title_dark"
                         android:textSize="14sp"
                         android:textStyle="bold"
@@ -447,7 +506,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Este es un papu tutorial para papus"
+                        android:text="Presiona el boton que esta en la tapa"
                         android:textColor="@color/text_body_grey"
                         android:textSize="12sp"
                         app:layout_constraintEnd_toEndOf="parent"
@@ -479,7 +538,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
-                        android:text="Escanea el código QR"
+                        android:text="Busca el código QR de la trampa"
                         android:textColor="@color/text_title_dark"
                         android:textSize="14sp"
                         android:textStyle="bold"
@@ -523,7 +582,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
-                        android:text="Confirma la conexión"
+                        android:text="Escanea el código QR"
                         android:textColor="@color/text_title_dark"
                         android:textSize="14sp"
                         android:textStyle="bold"
@@ -535,12 +594,104 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Arriba los poderosisimos pumas de la UNAM"
+                        android:text="Ve a la pestaña 'Vincular' y selecciona el metodo que prefieras para escanear"
                         android:textColor="@color/text_body_grey"
                         android:textSize="12sp"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="@id/tvStep3Title"
                         app:layout_constraintTop_toBottomOf="@id/tvStep3Title" />
+
+
+                    <FrameLayout
+                        android:id="@+id/dot4"
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:layout_marginTop="30dp"
+                        android:background="@drawable/bg_timeline_dot"
+                        android:elevation="3dp"
+                        app:layout_constraintStart_toStartOf="@id/dot1"
+                        app:layout_constraintTop_toBottomOf="@id/dot3">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="4"
+                            android:textColor="#FFFFFF"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/tvStep4Title"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:text="Confirma la conexión"
+                        android:textColor="@color/text_title_dark"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/dot4"
+                        app:layout_constraintTop_toTopOf="@id/dot4" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Una vez escaneado regresa a esta pagina"
+                        android:textColor="@color/text_body_grey"
+                        android:textSize="12sp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="@id/tvStep4Title"
+                        app:layout_constraintTop_toBottomOf="@id/tvStep4Title" />
+
+
+
+
+                    <FrameLayout
+                        android:id="@+id/dot5"
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:layout_marginTop="30dp"
+                        android:background="@drawable/bg_timeline_dot"
+                        android:elevation="3dp"
+                        app:layout_constraintStart_toStartOf="@id/dot1"
+                        app:layout_constraintTop_toBottomOf="@id/dot4">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="5"
+                            android:textColor="#FFFFFF"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/tvStep5Title"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:text="¡Listo! Empieza a monitorear"
+                        android:textColor="@color/text_title_dark"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/dot5"
+                        app:layout_constraintTop_toTopOf="@id/dot5" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="El nodo aparecerá aquí y verás sus capturas en vivo"
+                        android:textColor="@color/text_body_grey"
+                        android:textSize="12sp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="@id/tvStep5Title"
+                        app:layout_constraintTop_toBottomOf="@id/tvStep5Title" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -18,7 +18,7 @@
         <LinearLayout
             android:id="@+id/headerContainer"
             android:layout_width="0dp"
-            android:layout_height="240dp"
+            android:layout_height="100dp"
             android:background="@drawable/bg_header_gradient"
             android:orientation="horizontal"
             android:paddingHorizontal="20dp"
@@ -87,7 +87,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="20dp"
-            android:layout_marginTop="-50dp"
+            android:layout_marginTop="16dp"
             android:background="@drawable/bg_card_node"
             android:elevation="6dp"
             android:gravity="center"

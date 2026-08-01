@@ -63,6 +63,8 @@ class Inicio : AppCompatActivity() {
     // SharedPreferences para guardar la preferencia del tema
     private val prefs by lazy { getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE) }
 
+    private lateinit var tvDeviceCountBadge: TextView
+
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
@@ -84,6 +86,14 @@ class Inicio : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_inicio)
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            // Solo el bottom recibe padding — el top se queda en 0
+            // para que el header siga extendiéndose bajo la barra de estado
+            v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom)
+            insets
+        }
 
         createNotificationChannel()
         checkNotificationPermission()
@@ -109,12 +119,14 @@ class Inicio : AppCompatActivity() {
         rvDispositivos = findViewById(R.id.rvDispositivos)
         rvDispositivos.layoutManager = LinearLayoutManager(this)
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
+        swipeRefreshLayout.setColorSchemeResources(R.color.accent_neon)
 
         val btnNavEventos = findViewById<TextView>(R.id.btnNavEventos)
         val btnNavVincular = findViewById<TextView>(R.id.btnNavVincular)
 
         // Inicialización de las vistas del header/estadísticas/estado vacío
         tvStatTotal = findViewById(R.id.tvStatTotal)
+        //tvDeviceCountBadge = findViewById(R.id.tvDeviceCountBadge)
         tvStatActivos = findViewById(R.id.tvStatActivos)
         tvStatAlertas = findViewById(R.id.tvStatAlertas)
         emptyState = findViewById(R.id.emptyState)
@@ -236,6 +248,7 @@ class Inicio : AppCompatActivity() {
 
                         // Actualizar estadísticas
                         tvStatTotal.text = listaTrampas.size.toString()
+                        //tvDeviceCountBadge.text = if (listaTrampas.size == 1) "1 nodo" else "${listaTrampas.size} nodos"
                         tvStatActivos.text = listaTrampas.count { it.estado.contains("Activ", ignoreCase = true) }.toString()
                         tvStatAlertas.text = listaTrampas.count { it.estado.contains("detonada", ignoreCase = true) }.toString()
 
