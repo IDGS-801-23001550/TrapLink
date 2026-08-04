@@ -7,6 +7,18 @@ data class VincularRequestDto(
     val usuarioId: Int
 )
 
+data class DesvincularRequestDto(
+    @SerializedName("numeroSerie")
+    val numeroSerie: String
+)
+
+data class DesvincularResponseDto(
+    @SerializedName("status")
+    val status: String?,
+    @SerializedName("mensaje")
+    val mensaje: String?
+)
+
 data class MisDispositivosResponseDto(
     val dispositivoID: Int,
     val numeroSerie: String,

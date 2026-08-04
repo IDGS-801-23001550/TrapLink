@@ -20,7 +20,10 @@ data class FalsosPositivosResponseDto(
     val dispositivoID: Int,
     val totalEventos: Int,
     val falsosPositivos: Int,
-    val pctFalsosPositivos: Double
+    val pctFalsosPositivos: Double,
+    val capturasReales: Int,
+    val eventosSinRevisar: Int,
+    val nombreDispositivo: String
 )
 
 // --- DTOs para PrediccionesController ---

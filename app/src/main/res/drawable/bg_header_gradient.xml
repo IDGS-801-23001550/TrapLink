@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Capa de la imagen con bordes redondeados -->
+    <item>
+        <shape android:shape="rectangle">
+            <!-- Asigna tu imagen aquí -->
+            <solid android:color="@android:color/transparent" />
+            <corners
+                android:bottomLeftRadius="28dp"
+                android:bottomRightRadius="28dp" />
+        </shape>
+    </item>
+
+    <item>
+        <bitmap
+            android:src="@drawable/bg_app"
+            android:gravity="center|fill" />
+    </item>
+
+</layer-list>

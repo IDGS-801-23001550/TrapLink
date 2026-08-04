@@ -1,44 +1,87 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- ===== COLORES PRIMARIOS Y MARCA (#FFB700 & #736A65) ===== -->
+    <color name="primary">#FFB700</color>
+    <color name="primary_dark">#E0A200</color>
+    <color name="primary_container">#FFF4D6</color>
+    <color name="on_primary">#000000</color>
 
-    <!-- Color primario de marca: verde oliva (control de plagas / campo) -->
-    <color name="primary">#3D5A40</color>
-    <color name="primary_dark">#2C4230</color>
-    <color name="primary_container">#D9E4D3</color>
-    <color name="on_primary">#FFFFFF</color>
-
-    <!-- Secundario / acento: mostaza tierra -->
-    <color name="secondary">#C98A3D</color>
-    <color name="secondary_dark">#A6702E</color>
+    <color name="secondary">#736A65</color>
+    <color name="secondary_dark">#59524E</color>
     <color name="on_secondary">#FFFFFF</color>
 
-    <!-- Fondos y superficies -->
-    <color name="background">#F7F6F2</color>
+    <!-- ===== SUPERFICIES Y FONDOS (#FFFFFF & TINTES CÁLIDOS) ===== -->
+    <color name="background">#F7F6F5</color>
     <color name="surface">#FFFFFF</color>
-    <color name="surface_alt">#FBFAF7</color>
+    <color name="surface_alt">#F5F4F2</color>
+    <color name="app_bg_light">#F7F6F4</color>
+    <color name="card_bg">#FFFFFF</color>
+    <color name="header_bg">#FFFFFF</color>
+    <color name="stat_card_bg">#FFFFFF</color>
+    <color name="nav_bg">#FFFFFF</color>
 
-    <!-- Texto -->
-    <color name="text_primary">#262420</color>
-    <color name="text_secondary">#5C5A54</color>
-    <color name="text_hint">#9A9790</color>
-    <color name="divider">#E5E2D9</color>
+    <!-- ===== TEXTOS (#000000 & #736A65) ===== -->
+    <color name="text_primary">#000000</color>
+    <color name="text_secondary">#736A65</color>
+    <color name="text_hint">#A39C98</color>
+    <color name="text_title_dark">#000000</color>
+    <color name="text_body_grey">#736A65</color>
 
-    <!-- Estados de dispositivo / trampa -->
+    <!-- ===== ELEMENTOS DE INTERFAZ ===== -->
+    <color name="divider">#E2DFDC</color>
+    <color name="card_border">#E8E5E2</color>
+    <color name="card_stroke">#1A736A65</color>
+    <color name="input_bg">#F2F1EE</color>
+    <color name="theme_toggle_bg">#F2F1EE</color>
+    <color name="theme_toggle_icon">#000000</color>
+    <color name="nav_icon_inactive">#A39C98</color>
+    <color name="shadow_soft">#1A000000</color>
+
+    <!-- ===== GRADIENTE HEADER & ACENTOS DYNAMISM (#FFB700 & #736A65) ===== -->
+    <color name="header_gradient_start">#736A65</color>
+    <color name="header_gradient_end">#4A4340</color>
+
+    <color name="accent_neon">#FFB700</color>
+    <color name="accent_neon_soft">#FFF8E5</color>
+
+    <color name="fab_start">#FFB700</color>
+    <color name="fab_end">#E0A200</color>
+    <color name="radar_ring">#FFB700</color>
+    <color name="timeline_line">#E2DFDC</color>
+    <color name="skeleton_base">#E8E5E2</color>
+
+    <!-- ===== ESTADOS SEMÁNTICOS (CONSERVADOS) ===== -->
+    <!-- Verde / Activo / Reales -->
     <color name="status_active">#3F9142</color>
     <color name="status_active_bg">#E3F0E3</color>
+    <color name="chip_text_active">#1B7A3D</color>
+    <color name="stat_active">#3F9142</color>
 
+    <!-- Rojo / Captura / Falsos / Error -->
     <color name="status_capture">#C0432E</color>
     <color name="status_capture_bg">#F7E2DD</color>
-
-    <color name="status_battery_low">#E0A030</color>
-    <color name="status_battery_low_bg">#FBEDD6</color>
-
-    <color name="status_disconnected">#8A8780</color>
-    <color name="status_disconnected_bg">#EAE8E3</color>
-
-    <!-- Utilitarios -->
-    <color name="white">#FFFFFF</color>
-    <color name="black">#262420</color>
+    <color name="chip_text_capture">#B23A24</color>
+    <color name="stat_alert">#C0432E</color>
     <color name="error">#C0432E</color>
 
+    <!-- Amarillo / Batería Baja / Pendientes -->
+    <color name="status_battery_low">#E0A030</color>
+    <color name="status_battery_low_bg">#FBEDD6</color>
+    <color name="chip_text_battery">#B87A0E</color>
+
+    <!-- Desconectado / Inactivo -->
+    <color name="status_disconnected">#736A65</color>
+    <color name="status_disconnected_bg">#EAE8E3</color>
+    <color name="chip_text_offline">#736A65</color>
+
+    <!-- ===== BÁSICOS ===== -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="stat_total">#736A65</color>
+
+    <!-- Blanco con ~15% de opacidad para el cuerpo del cristal -->
+    <color name="glass_background">#B2FFFFFF</color>
+
+    <!-- Blanco con ~30% de opacidad para el borde sutil (opcional) -->
+    <color name="glass_stroke">#4DFFFFFF</color>
 </resources>

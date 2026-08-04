@@ -1,17 +1,30 @@
 package com.nvm.traplink
 
+import android.Manifest
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import android.view.animation.LinearInterpolator
 import android.widget.Button
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.nvm.traplink.data.ConfirmarEventoDto
+import com.nvm.traplink.data.DesvincularRequestDto
 import com.nvm.traplink.data.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -22,165 +35,265 @@ class Detalles : AppCompatActivity() {
     private var tokenGuardado: String = ""
     private var dispositivoId: Int = -1
     private var eventoPendienteId: Long = -1
-    private var tieneAlertaActiva: Boolean = false // Bandera de validación
+    private var tieneAlertaActiva: Boolean = false
 
     private lateinit var tvDetalleEstado: TextView
-    private lateinit var tvTituloAcciones: TextView
+    private lateinit var cardAccionesCampo: LinearLayout
     private lateinit var btnConfirmarReal: Button
     private lateinit var btnFalsoPositivo: Button
 
+    // Vistas del ícono hero con pulso (ringDetalleOuter/Inner)
+    private lateinit var ringDetalleOuter: View
+    private lateinit var ringDetalleInner: View
+    private var pulsoAnimators: List<AnimatorSet> = emptyList()
+
+    // Instancia de SharedPreferences compartida con el archivo centralizado
+    private val prefs by lazy { getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 1. Inyectar tema activo ANTES del super.onCreate
+        val isDark = prefs.getBoolean("dark_mode", false)
+        AppCompatDelegate.setDefaultNightMode(
+            if (isDark) AppCompatDelegate.MODE_NIGHT_YES
+            else AppCompatDelegate.MODE_NIGHT_NO
+        )
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_detalles)
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            // Solo el bottom recibe padding — el top se queda en 0
+            // para que el header siga extendiéndose bajo la barra de estado
+            v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom)
             insets
         }
 
-        // 1. Vincular vistas del XML
+        // 2. Controladores del Toggle del Tema e Icono
+        val ivToggleIcon = findViewById<ImageView>(R.id.ivToggleTemaIcon)
+        val btnToggleTema = findViewById<FrameLayout>(R.id.btnToggleTema)
+        ivToggleIcon.setImageResource(if (isDark) R.drawable.ic_sun else R.drawable.ic_moon)
+
+        btnToggleTema.setOnClickListener {
+            val nuevoModoOscuro = !prefs.getBoolean("dark_mode", false)
+            prefs.edit().putBoolean("dark_mode", nuevoModoOscuro).apply()
+
+            AppCompatDelegate.setDefaultNightMode(
+                if (nuevoModoOscuro) AppCompatDelegate.MODE_NIGHT_YES
+                else AppCompatDelegate.MODE_NIGHT_NO
+            )
+            recreate()
+        }
+
+        // 3. Botón de retroceso a Inicio
+        findViewById<FrameLayout>(R.id.btnAtras).setOnClickListener {
+            finish()
+        }
+
+        // Vincular vistas restantes
+        val tvHeaderTitulo = findViewById<TextView>(R.id.tvHeaderTitulo)
         val tvDetalleNombre = findViewById<TextView>(R.id.tvDetalleNombre)
-        tvDetalleEstado = findViewById<TextView>(R.id.tvDetalleEstado)
+        tvDetalleEstado = findViewById(R.id.tvDetalleEstado)
         val tvDetalleBateria = findViewById<TextView>(R.id.tvDetalleBateria)
         val tvDetallePrediccion = findViewById<TextView>(R.id.tvDetallePrediccion)
+        val skeletonBateria = findViewById<View>(R.id.skeletonBateria)
+        val skeletonPrediccion = findViewById<View>(R.id.skeletonPrediccion)
 
         val btnLocalizar = findViewById<Button>(R.id.btnLocalizar)
         val btnDetener = findViewById<Button>(R.id.btnDetener)
 
-        tvTituloAcciones = findViewById<TextView>(R.id.tvTituloAcciones)
-        btnConfirmarReal = findViewById<Button>(R.id.btnConfirmarReal)
-        btnFalsoPositivo = findViewById<Button>(R.id.btnFalsoPositivo)
+        cardAccionesCampo = findViewById(R.id.cardAccionesCampo)
+        btnConfirmarReal = findViewById(R.id.btnConfirmarReal)
+        btnFalsoPositivo = findViewById(R.id.btnFalsoPositivo)
 
-        // 2. Recuperar Token de sesión
-        val sharedPreferences = getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE)
-        tokenGuardado = sharedPreferences.getString("AUTH_TOKEN", "") ?: ""
+        ringDetalleOuter = findViewById(R.id.ringDetalleOuter)
+        ringDetalleInner = findViewById(R.id.ringDetalleInner)
+
+        // Recuperar Token utilizando la referencia lazy unificada
+        tokenGuardado = prefs.getString("AUTH_TOKEN", "") ?: ""
         val tokenCompleto = "Bearer $tokenGuardado"
 
-        // 3. Capturar datos del Intent
+        // Capturar datos recibidos por el Intent
         dispositivoId = intent.getIntExtra("EXTRA_DISPOSITIVO_ID", -1)
         val nombre = intent.getStringExtra("EXTRA_NOMBRE") ?: "Dispositivo"
-        val estadoBase = intent.getStringExtra("EXTRA_ESTADO") ?: "Monitoreando" // "Desconectado", "Monitoreando", etc.
+        val estadoBase = intent.getStringExtra("EXTRA_ESTADO") ?: "Monitoreando"
 
+        // Log inicial para verificar si se recibió correctamente el ID de la trampa
+        Log.d("TrapLinkDebug", "=== Detalles Activity Iniciada ===")
+        Log.d("TrapLinkDebug", "Intent EXTRA_DISPOSITIVO_ID: $dispositivoId")
+        Log.d("TrapLinkDebug", "Intent EXTRA_NOMBRE: $nombre")
+        Log.d("TrapLinkDebug", "Intent EXTRA_ESTADO: $estadoBase")
+
+        //tvHeaderTitulo.text = nombre
         tvDetalleNombre.text = nombre
-        tvDetalleBateria.text = "Carga Física: Cargando..."
-        tvDetallePrediccion.text = "Vida útil estimada: Cargando..."
 
-        // Por defecto, nos aseguramos que en código mantengan los estados de deshabilitados
+        iniciarShimmerSkeleton(skeletonBateria)
+        iniciarShimmerSkeleton(skeletonPrediccion)
+        animarEntradaDetalles()
+
         btnConfirmarReal.isEnabled = false
         btnFalsoPositivo.isEnabled = false
+        cardAccionesCampo.visibility = View.GONE
 
-        // 4. Consumir APIs
+        // Consumir APIs con validación de color dinámico
         if (dispositivoId != -1 && tokenGuardado.isNotEmpty()) {
             lifecycleScope.launch(Dispatchers.IO) {
-                // Hilo A: Cargar Predicciones de IA
                 try {
                     val responsePred = RetrofitClient.trapLinkService.getPrediccionesPorDispositivo(tokenCompleto, dispositivoId)
                     withContext(Dispatchers.Main) {
+                        detenerShimmerSkeleton(skeletonBateria)
+                        detenerShimmerSkeleton(skeletonPrediccion)
+                        tvDetalleBateria.visibility = View.VISIBLE
+                        tvDetallePrediccion.visibility = View.VISIBLE
+
                         if (responsePred.isSuccessful && !responsePred.body().isNullOrEmpty()) {
                             val ultimaPrediccion = responsePred.body()!!.first()
                             val horasRestantes = ultimaPrediccion.horasBateriaEstimada ?: 0.0
                             val estadoPredicho = ultimaPrediccion.clasePredicha ?: "Estable"
-                            tvDetalleBateria.text = "Carga Física: Restan aprox. ${horasRestantes.toInt()} horas"
-                            tvDetallePrediccion.text = "Vida útil estimada: $estadoPredicho"
+                            tvDetalleBateria.text = "Restan ${horasRestantes.toInt()}h"
+                            tvDetallePrediccion.text = estadoPredicho
                         } else {
-                            tvDetalleBateria.text = "Carga Física: 100%"
-                            tvDetallePrediccion.text = "Vida útil estimada: Estable"
+                            tvDetalleBateria.text = "100%"
+                            tvDetallePrediccion.text = "Estable"
                         }
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
-                        tvDetalleBateria.text = "Carga Física: No disponible"
-                        tvDetallePrediccion.text = "Vida útil estimada: Error"
+                        detenerShimmerSkeleton(skeletonBateria)
+                        detenerShimmerSkeleton(skeletonPrediccion)
+                        tvDetalleBateria.visibility = View.VISIBLE
+                        tvDetallePrediccion.visibility = View.VISIBLE
+                        tvDetalleBateria.text = "No disponible"
+                        tvDetallePrediccion.text = "Error"
                     }
                 }
 
-                // Hilo B: Buscar Eventos Pendientes de esta trampa específica evaluando la conexión
+                // Hilo B: Buscar Eventos Pendientes evaluando la conexión
                 try {
-                    // Si desde el inicio el backend sabe que está desconectada, pintamos "Desconectada" de una vez
                     if (estadoBase.equals("Desconectado", ignoreCase = true) || estadoBase.equals("Offline", ignoreCase = true)) {
                         withContext(Dispatchers.Main) {
-                            tvDetalleEstado.text = "Estado: Desconectada"
-                            tvDetalleEstado.setTextColor(android.graphics.Color.RED) // Opcional: Resaltar en rojo
+                            actualizarEstadoChip("Desconectada", R.drawable.bg_chip_offline, R.color.chip_text_offline)
                             tieneAlertaActiva = false
-
-                            // Nos aseguramos que todo el bloque de acciones se esconda por seguridad
-                            tvTituloAcciones.visibility = View.GONE
-                            btnConfirmarReal.visibility = View.GONE
-                            btnFalsoPositivo.visibility = View.GONE
+                            cardAccionesCampo.visibility = View.GONE
+                            detenerPulso()
                         }
                     } else {
-                        // SI ESTÁ CONECTADA: Validamos si tiene alertas en la API de Ricardo
+                        Log.d("TrapLinkDebug", "Consumiendo getEventosPendientes...")
                         val responseEv = RetrofitClient.trapLinkService.getEventosPendientes(tokenCompleto)
 
                         withContext(Dispatchers.Main) {
                             if (responseEv.isSuccessful && responseEv.body() != null) {
                                 val listaPendientes = responseEv.body()!!
-                                val eventoDeEstaTrampa = listaPendientes.find { it.dispositivoID.toInt() == dispositivoId.toInt() }
+                                Log.d("TrapLinkDebug", "API exitosa. Cantidad de pendientes devueltos: ${listaPendientes.size}")
+
+                                // Pintar en consola el contenido exacto de lo que está regresando el JSON
+                                listaPendientes.forEachIndexed { index, ev ->
+                                    Log.d("TrapLinkDebug", "Pendiente [$index] -> EventoID: ${ev.eventoID}, DispositivoID: ${ev.dispositivoID}")
+                                }
+
+                                // Búsqueda de coincidencia controlando posibles fallos de parseo
+                                val eventoDeEstaTrampa = listaPendientes.find {
+                                    try {
+                                        val match = it.dispositivoID.toInt() == dispositivoId
+                                        Log.d("TrapLinkDebug", "Comparando: Evento de Trampa ID [${it.dispositivoID}] con ID Actual [$dispositivoId] -> Resultado match: $match")
+                                        match
+                                    } catch (e: Exception) {
+                                        Log.e("TrapLinkDebug", "Error al parsear dispositivoID: '${it.dispositivoID}' a entero", e)
+                                        false
+                                    }
+                                }
 
                                 if (eventoDeEstaTrampa != null) {
                                     eventoPendienteId = eventoDeEstaTrampa.eventoID
-                                    tvDetalleEstado.text = "Estado: Alerta Activa (Falta Localizar)"
+                                    Log.d("TrapLinkDebug", "¡Match exitoso! eventoPendienteId asignado a: $eventoPendienteId")
+
+                                    actualizarEstadoChip("Alerta Activa (Falta Localizar)", R.drawable.bg_chip_capture, R.color.chip_text_capture)
                                     tieneAlertaActiva = true
+                                    iniciarPulso()
                                 } else {
-                                    // CASO: Conectada pero sin eventos activos
-                                    tvDetalleEstado.text = "Estado: Monitoreando (Sin novedades)"
+                                    Log.w("TrapLinkDebug", "No se encontró ningún evento pendiente en el JSON que coincida con el dispositivoId: $dispositivoId")
+                                    actualizarEstadoChip("Monitoreando (Sin novedades)", R.drawable.bg_chip_active, R.color.chip_text_active)
                                     tieneAlertaActiva = false
+                                    detenerPulso()
                                 }
                             } else {
-                                // Respaldar el estado por si la API falla pero sabemos que está conectada
-                                tvDetalleEstado.text = "Estado: Monitoreando (Sin novedades)"
+                                Log.e("TrapLinkDebug", "La llamada API no fue exitosa. Código: ${responseEv.code()} o el cuerpo vino nulo.")
+                                actualizarEstadoChip("Monitoreando (Sin novedades)", R.drawable.bg_chip_active, R.color.chip_text_active)
                                 tieneAlertaActiva = false
+                                detenerPulso()
                             }
                         }
                     }
                 } catch (e: Exception) {
-                    android.util.Log.e("TrapLinkError", "Fallo total en Hilo B al validar estados", e)
+                    Log.e("TrapLinkError", "Fallo total en validar estados", e)
+                    withContext(Dispatchers.Main) {
+                        actualizarEstadoChip("Error al verificar alertas", R.drawable.bg_chip_offline, R.color.chip_text_offline)
+                        tieneAlertaActiva = false
+                        detenerPulso()
+                    }
                 }
-
             }
+        } else {
+            Log.w("TrapLinkDebug", "No se consumieron las APIs. dispositivoId: $dispositivoId, token vacío: ${tokenGuardado.isEmpty()}")
         }
 
-        // --- MANEJO DE COMANDOS WEBSOCKET ---
+        // Dentro de onCreate() o la función donde inicializas las vistas de Detalles.kt:
+        val btnDesvincular = findViewById<LinearLayout>(R.id.btnDesvincular)
+
+        btnDesvincular.setOnClickListener {
+            mostrarDialogoConfirmacionDesvincular()
+        }
+
+        // Manejo de Comandos WS
         btnLocalizar.setOnClickListener {
             enviarComandoWebSocket(nombre, "LOCALIZAR")
-            tvDetalleEstado.text = "Estado: Localizando dispositivo en campo..."
+            actualizarEstadoChip("Localizando dispositivo en campo...", R.drawable.bg_chip_battery, R.color.chip_text_battery)
+            iniciarPulso()
         }
 
         btnDetener.setOnClickListener {
             enviarComandoWebSocket(nombre, "DETENER_LOCALIZAR")
 
-            // Lógica de validación de flujo seguro:
-            if (tieneAlertaActiva) {
-                tvDetalleEstado.text = "Estado: Alerta Activa (Pendiente de Revisión)"
+            val textoEstadoActual = tvDetalleEstado.text.toString()
+            val tieneAlertaVisual = textoEstadoActual.contains("Alerta", ignoreCase = true) ||
+                    textoEstadoActual.contains("Localizando", ignoreCase = true)
 
-                // Hacemos visibles los elementos de UI
-                tvTituloAcciones.visibility = View.VISIBLE
-                btnConfirmarReal.visibility = View.VISIBLE
-                btnFalsoPositivo.visibility = View.VISIBLE
+            Log.d("TrapLinkDebug", "Click en DETENER. tieneAlertaActiva: $tieneAlertaActiva, tieneAlertaVisual: $tieneAlertaVisual, eventoPendienteId: $eventoPendienteId")
 
-                // Los habilitamos para el clic
+            if (tieneAlertaActiva || tieneAlertaVisual) {
+                actualizarEstadoChip("Alerta Activa (Pendiente de Revisión)", R.drawable.bg_chip_capture, R.color.chip_text_capture)
+
+                cardAccionesCampo.visibility = View.VISIBLE
                 btnConfirmarReal.isEnabled = true
                 btnFalsoPositivo.isEnabled = true
 
                 Toast.makeText(this, "Trampa localizada. Acciones de apertura desbloqueadas.", Toast.LENGTH_SHORT).show()
             } else {
-                tvDetalleEstado.text = "Estado: Monitoreando (Sin novedades)"
+                actualizarEstadoChip("Monitoreando (Sin novedades)", R.drawable.bg_chip_active, R.color.chip_text_active)
+                detenerPulso()
             }
         }
 
-        // --- LOGICA DE BOTONES DE ACCIÓN DE CAMPO DE RICARDO ---
         btnConfirmarReal.setOnClickListener {
+            Log.d("TrapLinkDebug", "Click Confirmar Real. Mandando dictamen con eventoPendienteId: $eventoPendienteId")
             ejecutarConfirmacionEnAzure(true, nombre)
         }
 
         btnFalsoPositivo.setOnClickListener {
+            Log.d("TrapLinkDebug", "Click Falso Positivo. Mandando dictamen con eventoPendienteId: $eventoPendienteId")
             ejecutarConfirmacionEnAzure(false, nombre)
         }
     }
 
+    private fun actualizarEstadoChip(texto: String, bgRes: Int, colorRes: Int) {
+        tvDetalleEstado.text = texto
+        tvDetalleEstado.setBackgroundResource(bgRes)
+        tvDetalleEstado.setTextColor(ContextCompat.getColor(this, colorRes))
+    }
+
     private fun ejecutarConfirmacionEnAzure(esReal: Boolean, nombreDispositivo: String) {
+        Log.d("TrapLinkDebug", "ejecutarConfirmacionEnAzure. esReal: $esReal, ID a procesar: $eventoPendienteId")
         if (eventoPendienteId == -1L) {
             Toast.makeText(this, "No hay ningún evento activo por dictaminar.", Toast.LENGTH_SHORT).show()
             return
@@ -198,28 +311,123 @@ class Detalles : AppCompatActivity() {
                         val mensajeApi = if (esReal) "Marcado como CAPTURA REAL" else "Marcado como FALSO POSITIVO"
                         Toast.makeText(this@Detalles, mensajeApi, Toast.LENGTH_LONG).show()
 
-                        tvDetalleEstado.text = if (esReal) "Estado: Captura Validada" else "Estado: Falso Positivo Descartado"
+                        if (esReal) {
+                            actualizarEstadoChip("Captura Validada", R.drawable.bg_chip_capture, R.color.chip_text_capture)
+                        } else {
+                            actualizarEstadoChip("Falso Positivo Descartado", R.drawable.bg_chip_offline, R.color.chip_text_offline)
+                        }
 
-                        // Volvemos a ocultar el bloque completo para limpiar la interfaz tras finalizar el dictamen
-                        tvTituloAcciones.visibility = View.GONE
-                        btnConfirmarReal.visibility = View.GONE
-                        btnFalsoPositivo.visibility = View.GONE
-
+                        cardAccionesCampo.visibility = View.GONE
                         btnConfirmarReal.isEnabled = false
                         btnFalsoPositivo.isEnabled = false
                         tieneAlertaActiva = false
+                        detenerPulso()
 
                         enviarComandoWebSocket(nombreDispositivo, "RESET_TRAMPA")
                     } else {
+                        Log.e("TrapLinkDebug", "Error API dictaminar. Código de respuesta: ${response.code()}")
                         Toast.makeText(this@Detalles, "Error al dictaminar: ${response.code()}", Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
+                Log.e("TrapLinkDebug", "Fallo de red en confirmación Azure", e)
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@Detalles, "Error de red: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
+    }
+
+    // ===================== SKELETON LOADER =====================
+
+    private fun iniciarShimmerSkeleton(view: View) {
+        view.animate()
+            .alpha(0.4f)
+            .setDuration(700)
+            .withEndAction {
+                if (view.visibility == View.VISIBLE) {
+                    view.animate()
+                        .alpha(1f)
+                        .setDuration(700)
+                        .withEndAction { iniciarShimmerSkeleton(view) }
+                        .start()
+                }
+            }
+            .start()
+    }
+
+    private fun detenerShimmerSkeleton(view: View) {
+        view.animate().cancel()
+        view.visibility = View.GONE
+        view.alpha = 1f
+    }
+
+    // ===================== ANIMACIÓN DE ENTRADA =====================
+
+    private fun animarEntradaDetalles() {
+        val heroCard = findViewById<View>(R.id.heroCard)
+        val infoTilesRow = findViewById<View>(R.id.infoTilesRow)
+
+        listOf(heroCard, infoTilesRow).forEachIndexed { index, view ->
+            view.alpha = 0f
+            view.translationY = 30f
+            view.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(350)
+                .setStartDelay((index * 100).toLong())
+                .start()
+        }
+    }
+
+    // ===================== PULSO DEL ÍCONO HERO =====================
+
+    private fun iniciarPulso() {
+        detenerPulso()
+
+        ringDetalleOuter.visibility = View.VISIBLE
+        ringDetalleInner.visibility = View.VISIBLE
+
+        val rings = listOf(ringDetalleOuter, ringDetalleInner)
+        val delays = listOf(0L, 500L)
+
+        pulsoAnimators = rings.mapIndexed { index, ring ->
+            ring.scaleX = 0.5f
+            ring.scaleY = 0.5f
+            ring.alpha = 0f
+
+            val scaleX = ObjectAnimator.ofFloat(ring, "scaleX", 0.5f, 1f)
+            val scaleY = ObjectAnimator.ofFloat(ring, "scaleY", 0.5f, 1f)
+            val alpha = ObjectAnimator.ofFloat(ring, "alpha", 0.6f, 0f)
+
+            AnimatorSet().apply {
+                playTogether(scaleX, scaleY, alpha)
+                duration = 1400
+                startDelay = delays[index]
+                interpolator = LinearInterpolator()
+                addListener(object : android.animation.AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: android.animation.Animator) {
+                        if (ringDetalleOuter.visibility == View.VISIBLE) {
+                            start()
+                        }
+                    }
+                })
+                start()
+            }
+        }
+    }
+
+    private fun detenerPulso() {
+        pulsoAnimators.forEach { it.cancel() }
+        if (::ringDetalleOuter.isInitialized) {
+            ringDetalleOuter.visibility = View.INVISIBLE
+            ringDetalleInner.visibility = View.INVISIBLE
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        detenerPulso()
     }
 
     private fun enviarComandoWebSocket(targetId: String, comando: String) {
@@ -247,5 +455,63 @@ class Detalles : AppCompatActivity() {
             }
         }
         client.newWebSocket(request, webSocketListener)
+    }
+
+    private fun mostrarDialogoConfirmacionDesvincular() {
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("Desvincular Dispositivo")
+            .setMessage("¿Estás seguro de que deseas desvincular esta trampa? Dejará de enviar lecturas a tu cuenta.")
+            .setPositiveButton("Desvincular") { _, _ ->
+                ejecutarDesvinculacion()
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun ejecutarDesvinculacion() {
+        val prefs = getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE)
+        val token = prefs.getString("AUTH_TOKEN", "") ?: ""
+
+        // Obtenemos el número de serie cargado previamente en el Intent o variable global
+        val numeroSerie = intent.getStringExtra("EXTRA_NOMBRE") ?: ""
+
+        if (token.isEmpty() || numeroSerie.isEmpty()) {
+            Toast.makeText(this, "Información inválida para desvincular", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val tokenCompleto = "Bearer $token"
+                val request = DesvincularRequestDto(numeroSerie = numeroSerie)
+
+                val response = RetrofitClient.trapLinkService.desvincularDispositivo(tokenCompleto, request)
+
+                withContext(Dispatchers.Main) {
+                    if (response.isSuccessful && response.body() != null) {
+                        val mensajeExitosa = response.body()?.status ?: "Dispositivo desvinculado con éxito"
+                        Toast.makeText(this@Detalles, mensajeExitosa, Toast.LENGTH_LONG).show()
+
+                        // Regresamos a la pantalla de Inicio para que refresque la lista de nodos
+                        val intent = Intent(this@Detalles, Inicio::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                        startActivity(intent)
+                        finish()
+                    } else {
+                        val mensajeError = when (response.code()) {
+                            400 -> "La trampa no está vinculada."
+                            403 -> "No tienes permiso para desvincular esta trampa."
+                            404 -> "El número de serie no existe."
+                            else -> "Error al desvincular (${response.code()})"
+                        }
+                        Toast.makeText(this@Detalles, mensajeError, Toast.LENGTH_LONG).show()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@Detalles, "Error de red: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
 }
