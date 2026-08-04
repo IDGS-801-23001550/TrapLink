@@ -8,6 +8,7 @@ interface TrapLinkApiService {
     // --- ENDPOINTS DE DISPOSITIVOS ---
     @PUT("Dispositivos/vincular")
     suspend fun vincularDispositivo(
+        @Header("Authorization") token: String,
         @Body request: VincularRequestDto
     ): Response<Map<String, String>>
 

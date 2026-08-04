@@ -36,12 +36,13 @@ class AnalisisTrampasAdapter(
         val item = listaAnalisis[position]
         val context = holder.itemView.context
 
+
         // Leemos directamente del DTO sin realizar cálculos aproximados en el cliente
         val reales = item.capturasReales
         val falsos = item.falsosPositivos
         val pendientes = item.eventosSinRevisar
 
-        holder.tvIdDispositivo.text = "ID Dispositivo: ${item.dispositivoID}"
+        holder.tvIdDispositivo.text = "${item.nombreDispositivo}"
         holder.tvPorcentajeFalsos.text = String.format(Locale.getDefault(), "%.1f%% Falsos", item.pctFalsosPositivos)
         holder.tvTotalEventos.text = "Eventos: ${item.totalEventos}"
         holder.tvCapturasReales.text = "Reales: $reales"

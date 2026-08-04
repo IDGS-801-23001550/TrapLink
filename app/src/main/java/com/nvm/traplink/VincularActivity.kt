@@ -294,8 +294,9 @@ class VincularActivity : AppCompatActivity() {
         val tokenGuardado = prefs.getString("AUTH_TOKEN", "") ?: ""
         val usuarioIdGuardado = prefs.getInt("USUARIO_ID", -1)
 
-        if (usuarioIdGuardado == -1) {
-            Toast.makeText(this, "ERROR LOCAL: El USUARIO_ID es -1. Reinstala la app e inicia sesión de nuevo.", Toast.LENGTH_LONG).show()
+        // Validamos tanto el usuarioId como la existencia del token
+        if (usuarioIdGuardado == -1 || tokenGuardado.isEmpty()) {
+            Toast.makeText(this, "Información de sesión inválida. Inicia sesión de nuevo.", Toast.LENGTH_LONG).show()
             return
         }
 
@@ -303,12 +304,16 @@ class VincularActivity : AppCompatActivity() {
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
+                // Se le agrega el prefijo Bearer igual que en desvinculación
+                val tokenCompleto = "Bearer $tokenGuardado"
+
                 val requestDto = VincularRequestDto(
                     numeroSerie = numeroSerie,
                     usuarioId = usuarioIdGuardado
                 )
 
-                val response = RetrofitClient.trapLinkService.vincularDispositivo(requestDto)
+                // Pasamos tokenCompleto como primer parámetro
+                val response = RetrofitClient.trapLinkService.vincularDispositivo(tokenCompleto, requestDto)
 
                 withContext(Dispatchers.Main) {
                     mostrarEstadoCarga(false)

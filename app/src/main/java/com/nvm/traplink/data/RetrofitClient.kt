@@ -4,7 +4,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
-    private const val BASE_URL = "https://traplinkpumasapi.azurewebsites.net/api/"
+    private const val BASE_URL = "https://traplinkapi-abczfsdbc6dfcaap.canadacentral-01.azurewebsites.net/api/"
 
     val authService: AuthApiService by lazy {
         Retrofit.Builder()

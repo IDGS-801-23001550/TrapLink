@@ -253,7 +253,8 @@ class Eventos : AppCompatActivity() {
                                         falsosPositivos = 0,
                                         pctFalsosPositivos = 0.0,
                                         capturasReales = 0,
-                                        eventosSinRevisar = 0
+                                        eventosSinRevisar = 0,
+                                        nombreDispositivo = dispositivo.numeroSerie
                                     )
                                 )
                             }
@@ -313,6 +314,7 @@ class Eventos : AppCompatActivity() {
             buenos == total -> "Todos tus nodos están funcionando bien. Buen trabajo."
             peor != null -> {
                 val pctTexto = String.format(Locale.getDefault(), "%.0f", peor.pctFalsosPositivos)
+                val nombreNodo = if (peor.nombreDispositivo.isNotBlank()) peor.nombreDispositivo else "Nodo #${peor.dispositivoID}"
                 "$buenos de $total nodos tienen buen desempeño. El Nodo #${peor.dispositivoID} tiene $pctTexto% de falsos positivos, revísalo."
             }
             else -> "Revisa el rendimiento de tus nodos en la lista de abajo."
