@@ -34,45 +34,26 @@
 
     </FrameLayout>
 
-    <!-- Barra superior con título y botón cerrar -->
-    <LinearLayout
-        android:id="@+id/topBar"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:background="#88000000"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="14dp"
+    <!-- Botón cerrar, flotando sobre el video sin barra ni fondo detrás -->
+    <FrameLayout
+        android:id="@+id/btnCerrarTutorial"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_margin="16dp"
+        android:background="@drawable/bg_theme_toggle"
+        android:clickable="true"
+        android:elevation="4dp"
+        android:focusable="true"
+        android:foreground="?android:attr/selectableItemBackgroundBorderless"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Cómo vincular tu nodo"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <FrameLayout
-            android:id="@+id/btnCerrarTutorial"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:background="@drawable/bg_theme_toggle"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?android:attr/selectableItemBackgroundBorderless">
-
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_close" />
-        </FrameLayout>
-    </LinearLayout>
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_close" />
+    </FrameLayout>
 
     <!-- Botón de play superpuesto (se oculta al reproducir) -->
     <FrameLayout

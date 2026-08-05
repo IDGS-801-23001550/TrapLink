@@ -65,8 +65,11 @@ class TutorialActivity : AppCompatActivity() {
 
     private fun configurarVideo() {
         try {
-            // Opción A (recomendada): video local en res/raw/tutorial_vincular.mp4
-            val uriVideo = Uri.parse("android.resource://$packageName/${R.raw.tutorial_vincular}")
+            // Usa el video que envió Inicio según el método seleccionado (QR o Número de serie).
+            // Si esta pantalla se abre sin ese extra (por ejemplo desde otro punto de la app),
+            // cae de vuelta al video de QR por defecto.
+            val videoResId = intent.getIntExtra(Inicio.EXTRA_VIDEO_RES, R.raw.tutorial_vincular)
+            val uriVideo = Uri.parse("android.resource://$packageName/$videoResId")
 
             videoTutorial.setVideoURI(uriVideo)
 
@@ -81,6 +84,9 @@ class TutorialActivity : AppCompatActivity() {
                 if (posicionActual > 0) {
                     videoTutorial.seekTo(posicionActual)
                 }
+                // Arranca solo, sin esperar a que el usuario toque el overlay de play
+                videoTutorial.start()
+                btnPlayOverlay.visibility = View.GONE
             }
 
             videoTutorial.setOnCompletionListener {

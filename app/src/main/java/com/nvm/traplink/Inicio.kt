@@ -15,7 +15,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import android.widget.VideoView
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -39,6 +38,10 @@ import kotlinx.coroutines.withContext
 
 class Inicio : AppCompatActivity() {
 
+    companion object {
+        const val EXTRA_VIDEO_RES = "EXTRA_VIDEO_RES"
+    }
+
     private val CHANNEL_ID = "trap_alerts_channel"
     private lateinit var rvDispositivos: RecyclerView
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
@@ -47,11 +50,15 @@ class Inicio : AppCompatActivity() {
     private lateinit var tvStatActivos: TextView
     private lateinit var tvStatAlertas: TextView
     private lateinit var emptyState: NestedScrollView
+
+    // Título "Tus Dispositivos" — solo debe verse cuando ya hay al menos una trampa vinculada
+    private lateinit var screenTitleRow: LinearLayout
+    private lateinit var tvScreenSubtitle: TextView
     //private lateinit var fabVincular: FrameLayout
 
     // Vistas del video preview (autoplay, silenciado, en loop)
     private lateinit var cardVideoPreview: CardView
-    private lateinit var videoPreview: VideoView
+    private lateinit var videoPreview: CenterCropVideoView
     private lateinit var btnSonidoPreview: FrameLayout
     private lateinit var ivIconoSonido: ImageView
     private var mediaPlayerPreview: android.media.MediaPlayer? = null
@@ -59,6 +66,43 @@ class Inicio : AppCompatActivity() {
     private var yaSeAnimaronStats = false
     private var primeraCargaCompleta = false
     private lateinit var skeletonContainer: LinearLayout
+
+    // ===== Selector de método de vinculación (Código QR / Número de serie) =====
+    private lateinit var methodSelector: LinearLayout
+    private lateinit var btnTutorialQr: TextView
+    private lateinit var btnTutorialSerie: TextView
+    private lateinit var tvStep1Title: TextView
+    private lateinit var tvStep1Desc: TextView
+    private lateinit var tvStep2Title: TextView
+    private lateinit var tvStep2Desc: TextView
+    private lateinit var tvStep3Title: TextView
+    private lateinit var tvStep3Desc: TextView
+    private lateinit var tvStep4Title: TextView
+    private lateinit var tvStep4Desc: TextView
+    private lateinit var tvStep5Title: TextView
+    private lateinit var tvStep5Desc: TextView
+
+    private var metodoActual = MetodoVinculacion.QR
+
+    private enum class MetodoVinculacion { QR, SERIE }
+
+    private data class PasoTutorial(val titulo: String, val desc: String)
+
+    private val pasosQr = listOf(
+        PasoTutorial("Enciende la trampa", "Presiona el botón que está en la tapa"),
+        PasoTutorial("Busca el código QR de la trampa", "Se encuentra en la parte inferior del dispositivo"),
+        PasoTutorial("Escanea el código QR", "Ve a la pestaña 'Vincular' y selecciona 'Escanear QR'"),
+        PasoTutorial("Confirma la conexión", "Una vez escaneado regresa a esta página"),
+        PasoTutorial("¡Listo! Empieza a monitorear", "El nodo aparecerá aquí y verás sus capturas en vivo")
+    )
+
+    private val pasosSerie = listOf(
+        PasoTutorial("Enciende la trampa", "Presiona el botón que está en la tapa"),
+        PasoTutorial("Busca el número de serie", "Se encuentra en la parte inferior del dispositivo, junto al QR"),
+        PasoTutorial("Escríbelo en la app", "Ve a la pestaña 'Vincular' y selecciona 'Número de serie'"),
+        PasoTutorial("Confirma la conexión", "Verifica que el número coincida y confirma"),
+        PasoTutorial("¡Listo! Empieza a monitorear", "El nodo aparecerá aquí y verás sus capturas en vivo")
+    )
 
     // SharedPreferences para guardar la preferencia del tema
     private val prefs by lazy { getSharedPreferences("TrapLinkPrefs", MODE_PRIVATE) }
@@ -132,6 +176,11 @@ class Inicio : AppCompatActivity() {
         emptyState = findViewById(R.id.emptyState)
         //fabVincular = findViewById(R.id.fabVincular)
 
+        // El título "Tus Dispositivos" arranca oculto (ya lo está en el XML) hasta
+        // que sepamos si el usuario tiene al menos una trampa vinculada
+        screenTitleRow = findViewById(R.id.screenTitleRow)
+        tvScreenSubtitle = findViewById(R.id.tvScreenSubtitle)
+
         // Skeleton loader: se muestra mientras llega la primera respuesta del API
         skeletonContainer = findViewById(R.id.skeletonContainer)
         iniciarShimmer()
@@ -142,11 +191,35 @@ class Inicio : AppCompatActivity() {
         btnSonidoPreview = findViewById(R.id.btnSonidoPreview)
         ivIconoSonido = findViewById(R.id.ivIconoSonido)
 
-        configurarVideoPreview()
+        // ===== Selector de método de vinculación =====
+        methodSelector = findViewById(R.id.methodSelector)
+        btnTutorialQr = findViewById(R.id.btnTutorialQr)
+        btnTutorialSerie = findViewById(R.id.btnTutorialSerie)
+        tvStep1Title = findViewById(R.id.tvStep1Title)
+        tvStep1Desc = findViewById(R.id.tvStep1Desc)
+        tvStep2Title = findViewById(R.id.tvStep2Title)
+        tvStep2Desc = findViewById(R.id.tvStep2Desc)
+        tvStep3Title = findViewById(R.id.tvStep3Title)
+        tvStep3Desc = findViewById(R.id.tvStep3Desc)
+        tvStep4Title = findViewById(R.id.tvStep4Title)
+        tvStep4Desc = findViewById(R.id.tvStep4Desc)
+        tvStep5Title = findViewById(R.id.tvStep5Title)
+        tvStep5Desc = findViewById(R.id.tvStep5Desc)
 
-        // Tocar el video (o la tarjeta completa) abre la versión completa con sonido y controles
+        btnTutorialQr.setOnClickListener { cambiarMetodoTutorial(MetodoVinculacion.QR) }
+        btnTutorialSerie.setOnClickListener { cambiarMetodoTutorial(MetodoVinculacion.SERIE) }
+
+        // Estado inicial: pasos de QR (el XML ya muestra ese segmento resaltado por defecto)
+        mostrarPasos(pasosQr)
+        configurarVideoPreview(videoResPara(metodoActual))
+
+        // Tocar el video (o la tarjeta completa) abre la versión completa con sonido y controles,
+        // usando el mismo video del método que esté seleccionado en ese momento
         cardVideoPreview.setOnClickListener {
-            startActivity(Intent(this, TutorialActivity::class.java))
+            val intent = Intent(this, TutorialActivity::class.java).apply {
+                putExtra(EXTRA_VIDEO_RES, videoResPara(metodoActual))
+            }
+            startActivity(intent)
         }
 
         // Botón de bocina: activa/desactiva el sonido del preview sin salir de la pantalla
@@ -261,6 +334,8 @@ class Inicio : AppCompatActivity() {
                         if (listaTrampas.isEmpty()) {
                             emptyState.visibility = View.VISIBLE
                             rvDispositivos.visibility = View.GONE
+                            screenTitleRow.visibility = View.GONE
+                            tvScreenSubtitle.visibility = View.GONE
                             reanudarVideoPreview()
 
                             // Asegura que al mostrarse el estado vacío empiece desde arriba
@@ -270,6 +345,8 @@ class Inicio : AppCompatActivity() {
                         } else {
                             emptyState.visibility = View.GONE
                             rvDispositivos.visibility = View.VISIBLE
+                            screenTitleRow.visibility = View.VISIBLE
+                            tvScreenSubtitle.visibility = View.VISIBLE
                             pausarVideoPreview()
                         }
 
@@ -360,16 +437,64 @@ class Inicio : AppCompatActivity() {
         }
     }
 
+    // ===================== SELECTOR: MÉTODO DE VINCULACIÓN (QR / Número de serie) =====================
+
+    /**
+     * Cambia el tutorial mostrado (pasos + video) según el método elegido por el usuario.
+     * No hace nada si ya se encontraba en ese método, para no reiniciar el video sin razón.
+     */
+    private fun cambiarMetodoTutorial(metodo: MetodoVinculacion) {
+        if (metodo == metodoActual) return
+        metodoActual = metodo
+
+        when (metodo) {
+            MetodoVinculacion.QR -> {
+                marcarSegmentoActivo(activo = btnTutorialQr, inactivo = btnTutorialSerie)
+                mostrarPasos(pasosQr)
+            }
+            MetodoVinculacion.SERIE -> {
+                marcarSegmentoActivo(activo = btnTutorialSerie, inactivo = btnTutorialQr)
+                mostrarPasos(pasosSerie)
+            }
+        }
+        configurarVideoPreview(videoResPara(metodo))
+    }
+
+    /** Devuelve el recurso de video (res/raw) que corresponde al método de vinculación. */
+    private fun videoResPara(metodo: MetodoVinculacion): Int = when (metodo) {
+        MetodoVinculacion.QR -> R.raw.tutorial_vincular
+        MetodoVinculacion.SERIE -> R.raw.tutorial_serie
+    }
+
+    /** Actualiza los 5 pasos del timeline con el contenido del método elegido. */
+    private fun mostrarPasos(pasos: List<PasoTutorial>) {
+        tvStep1Title.text = pasos[0].titulo; tvStep1Desc.text = pasos[0].desc
+        tvStep2Title.text = pasos[1].titulo; tvStep2Desc.text = pasos[1].desc
+        tvStep3Title.text = pasos[2].titulo; tvStep3Desc.text = pasos[2].desc
+        tvStep4Title.text = pasos[3].titulo; tvStep4Desc.text = pasos[3].desc
+        tvStep5Title.text = pasos[4].titulo; tvStep5Desc.text = pasos[4].desc
+    }
+
+    /** Resalta la pestaña activa del selector y deja la otra en su estado neutro. */
+    private fun marcarSegmentoActivo(activo: TextView, inactivo: TextView) {
+        activo.setBackgroundResource(R.drawable.bg_segment_selected)
+        activo.setTextColor(ContextCompat.getColor(this, R.color.text_title_dark))
+        inactivo.background = null
+        inactivo.setTextColor(ContextCompat.getColor(this, R.color.text_body_grey))
+    }
+
     // ===================== VIDEO PREVIEW AUTOPLAY (estado vacío) =====================
 
     /**
      * Configura el VideoView del estado vacío para que arranque solo, en loop y
-     * silenciado apenas el video termina de prepararse (sin esperar ningún tap).
-     * Requiere el archivo res/raw/tutorial_vincular.mp4
+     * con el volumen que el usuario haya elegido (mute por defecto), apenas el
+     * video termina de prepararse. Se llama tanto al inicio como al cambiar de
+     * método de vinculación, pasando el recurso de video correspondiente.
+     * Requiere res/raw/tutorial_vincular.mp4 (QR) y res/raw/tutorial_serie.mp4 (Número de serie)
      */
-    private fun configurarVideoPreview() {
+    private fun configurarVideoPreview(resId: Int) {
         try {
-            val uri = Uri.parse("android.resource://$packageName/${R.raw.tutorial_vincular}")
+            val uri = Uri.parse("android.resource://$packageName/$resId")
             videoPreview.setVideoURI(uri)
 
             // Evitamos que el video solicite o tome el foco automáticamente
@@ -379,14 +504,11 @@ class Inicio : AppCompatActivity() {
             videoPreview.setOnPreparedListener { mp ->
                 mediaPlayerPreview = mp
                 mp.isLooping = true
-                mp.setVolume(0f, 0f) // arranca silenciado
+                val volumen = if (sonidoActivado) 1f else 0f
+                mp.setVolume(volumen, volumen)
+                // Le pasamos las dimensiones reales del video para que se recorte y llene el card
+                videoPreview.setVideoSize(mp.videoWidth, mp.videoHeight)
                 videoPreview.start()
-
-                // Forzamos al NestedScrollView a regresar arriba de inmediato
-                // por si la reproducción intentó mover la pantalla
-                emptyState.post {
-                    emptyState.scrollTo(0, 0)
-                }
             }
 
             videoPreview.setOnErrorListener { _, _, _ -> true }

@@ -218,9 +218,11 @@
             android:layout_marginEnd="20dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/headerContainer">
+            app:layout_constraintTop_toBottomOf="@id/headerContainer"
+            tools:visibility="visible">
 
             <View
                 android:layout_width="4dp"
@@ -260,9 +262,11 @@
             android:text="Administra y monitorea tus nodos conectados"
             android:textColor="@color/text_body_grey"
             android:textSize="12sp"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/screenTitleRow" />
+            app:layout_constraintTop_toBottomOf="@id/screenTitleRow"
+            tools:visibility="visible" />
 
         <!-- ===================== SKELETON LOADER (primera carga) ===================== -->
         <LinearLayout
@@ -454,11 +458,59 @@
 
                 </LinearLayout>
 
-                <!-- ===== TIMELINE CONECTADO ===== -->
+                <!-- ===== SELECTOR: MÉTODO DE VINCULACIÓN ===== -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="26dp"
+                    android:gravity="center"
+                    android:text="¿Cómo quieres vincular tu trampa?"
+                    android:textColor="@color/text_title_dark"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:id="@+id/methodSelector"
+                    android:layout_width="match_parent"
+                    android:layout_height="46dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_stat_card"
+                    android:orientation="horizontal"
+                    android:padding="4dp">
+
+                    <TextView
+                        android:id="@+id/btnTutorialQr"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_segment_selected"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:text="Código QR"
+                        android:textColor="@color/text_title_dark"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/btnTutorialSerie"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:text="Número de serie"
+                        android:textColor="@color/text_body_grey"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+                <!-- ===== TIMELINE (contenido dinámico según método elegido) ===== -->
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="26dp">
+                    android:layout_marginTop="24dp">
 
                     <View
                         android:id="@+id/timelineLine"
@@ -503,6 +555,7 @@
                         app:layout_constraintTop_toTopOf="@id/dot1" />
 
                     <TextView
+                        android:id="@+id/tvStep1Desc"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
@@ -547,6 +600,7 @@
                         app:layout_constraintTop_toTopOf="@id/dot2" />
 
                     <TextView
+                        android:id="@+id/tvStep2Desc"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
@@ -591,6 +645,7 @@
                         app:layout_constraintTop_toTopOf="@id/dot3" />
 
                     <TextView
+                        android:id="@+id/tvStep3Desc"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
@@ -636,6 +691,7 @@
                         app:layout_constraintTop_toTopOf="@id/dot4" />
 
                     <TextView
+                        android:id="@+id/tvStep4Desc"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
@@ -683,6 +739,7 @@
                         app:layout_constraintTop_toTopOf="@id/dot5" />
 
                     <TextView
+                        android:id="@+id/tvStep5Desc"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
@@ -695,7 +752,7 @@
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
-                <!-- ===== VIDEO PREVIEW — arranca solo, en loop, sin sonido ===== -->
+                <!-- ===== VIDEO PREVIEW — arranca solo, en loop, sin sonido (contenido dinámico) ===== -->
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -707,75 +764,61 @@
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/cardVideoPreview"
+                <!-- Contenedor centrador: el video es vertical (formato celular), así que el
+                     card ya no ocupa todo el ancho — se centra y respeta la proporción 9:16 -->
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="210dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?android:attr/selectableItemBackground"
-                    app:cardCornerRadius="20dp"
-                    app:cardElevation="6dp">
+                    android:layout_height="wrap_content">
 
-                    <FrameLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="#000000">
-
-                        <VideoView
-                            android:id="@+id/videoPreview"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent" />
-
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="70dp"
-                            android:layout_gravity="bottom"
-                            android:background="@drawable/gradient_video_bottom" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="bottom|start"
-                            android:layout_margin="12dp"
-                            android:text="Así se hace en 15 segundos"
-                            android:textColor="#FFFFFF"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="top|end"
-                            android:layout_margin="10dp"
-                            android:background="@drawable/bg_theme_toggle"
-                            android:paddingHorizontal="10dp"
-                            android:paddingVertical="4dp"
-                            android:text="Ver completo"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold" />
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/cardVideoPreview"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?android:attr/selectableItemBackground"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="6dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintDimensionRatio="9:16"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintWidth_percent="0.58">
 
                         <FrameLayout
-                            android:id="@+id/btnSonidoPreview"
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
-                            android:layout_gravity="bottom|end"
-                            android:layout_margin="10dp"
-                            android:background="@drawable/bg_theme_toggle"
-                            android:clickable="true"
-                            android:focusable="true">
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="#000000">
 
-                            <ImageView
-                                android:id="@+id/ivIconoSonido"
-                                android:layout_width="16dp"
-                                android:layout_height="16dp"
-                                android:layout_gravity="center"
-                                android:src="@drawable/ic_volume_off" />
+                            <com.nvm.traplink.CenterCropVideoView
+                                android:id="@+id/videoPreview"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_gravity="center" />
+
+                            <FrameLayout
+                                android:id="@+id/btnSonidoPreview"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:layout_gravity="bottom|end"
+                                android:layout_margin="10dp"
+                                android:background="@drawable/bg_theme_toggle"
+                                android:clickable="true"
+                                android:focusable="true">
+
+                                <ImageView
+                                    android:id="@+id/ivIconoSonido"
+                                    android:layout_width="16dp"
+                                    android:layout_height="16dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_volume_off" />
+                            </FrameLayout>
+
                         </FrameLayout>
+                    </androidx.cardview.widget.CardView>
 
-                    </FrameLayout>
-                </androidx.cardview.widget.CardView>
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
