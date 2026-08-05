@@ -433,7 +433,7 @@ class Detalles : AppCompatActivity() {
     private fun enviarComandoWebSocket(targetId: String, comando: String) {
         val client = okhttp3.OkHttpClient()
         val request = okhttp3.Request.Builder()
-            .url("wss://traplink20260702232427-gvasf4b8b4h0gdg5.canadacentral-01.azurewebsites.net/ws")
+            .url("wss://traplinkapi-abczfsdbc6dfcaap.canadacentral-01.azurewebsites.net/ws")
             .build()
 
         val webSocketListener = object : okhttp3.WebSocketListener() {

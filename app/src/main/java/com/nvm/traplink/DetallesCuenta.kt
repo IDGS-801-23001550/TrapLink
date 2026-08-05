@@ -37,7 +37,7 @@ class DetallesCuenta : AppCompatActivity() {
 
         val btnEditarPerfil = findViewById<LinearLayout>(R.id.btnEditarPerfil)
         val btnRegistrar = findViewById<LinearLayout>(R.id.btnRegistrar)
-        val btnNotificaciones = findViewById<LinearLayout>(R.id.btnNotificaciones)
+        //val btnNotificaciones = findViewById<LinearLayout>(R.id.btnNotificaciones)
         val btnCerrarSesion = findViewById<LinearLayout>(R.id.btnCerrarSesion)
 
         // Configurar el icono del Toggle de Tema según el modo actual

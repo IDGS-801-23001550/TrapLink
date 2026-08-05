@@ -12,7 +12,7 @@
     <LinearLayout
         android:id="@+id/headerContainer"
         android:layout_width="0dp"
-        android:layout_height="240dp"
+        android:layout_height="190dp"
         android:background="@drawable/bg_header_gradient"
         android:clipToOutline="true"
         android:orientation="vertical"
@@ -238,7 +238,7 @@
                     app:tint="@color/text_body_grey" />
             </LinearLayout>
 
-            <!-- Notificaciones y Alertas -->
+            <!-- Notificaciones y Alertas
             <LinearLayout
                 android:id="@+id/btnNotificaciones"
                 android:layout_width="match_parent"
@@ -297,7 +297,7 @@
                     android:src="@drawable/ic_back"
                     android:rotation="180"
                     app:tint="@color/text_body_grey" />
-            </LinearLayout>
+            </LinearLayout>-->
 
             <!-- OPTION 4: Cerrar Sesión (Acción destructiva / Destacada) -->
             <LinearLayout
