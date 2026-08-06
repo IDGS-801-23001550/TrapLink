@@ -68,7 +68,7 @@ class TutorialActivity : AppCompatActivity() {
             // Usa el video que envió Inicio según el método seleccionado (QR o Número de serie).
             // Si esta pantalla se abre sin ese extra (por ejemplo desde otro punto de la app),
             // cae de vuelta al video de QR por defecto.
-            val videoResId = intent.getIntExtra(Inicio.EXTRA_VIDEO_RES, R.raw.tutorial_vincular)
+            val videoResId = intent.getIntExtra(Inicio.EXTRA_VIDEO_RES, R.raw.tutorial_serie)
             val uriVideo = Uri.parse("android.resource://$packageName/$videoResId")
 
             videoTutorial.setVideoURI(uriVideo)
