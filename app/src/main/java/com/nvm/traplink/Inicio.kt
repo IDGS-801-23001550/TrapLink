@@ -82,7 +82,7 @@ class Inicio : AppCompatActivity() {
     private lateinit var tvStep5Title: TextView
     private lateinit var tvStep5Desc: TextView
 
-    private var metodoActual = MetodoVinculacion.QR
+    private var metodoActual = MetodoVinculacion.SERIE
 
     private enum class MetodoVinculacion { QR, SERIE }
 
@@ -90,7 +90,7 @@ class Inicio : AppCompatActivity() {
 
     private val pasosQr = listOf(
         PasoTutorial("Enciende la trampa", "Presiona el botón que está en la tapa"),
-        PasoTutorial("Busca el código QR de la trampa", "Se encuentra en la parte inferior del dispositivo"),
+        PasoTutorial("Busca el código QR de la trampa", "Se encuentra en la parte superior del dispositivo"),
         PasoTutorial("Escanea el código QR", "Ve a la pestaña 'Vincular' y selecciona 'Escanear QR'"),
         PasoTutorial("Confirma la conexión", "Una vez escaneado regresa a esta página"),
         PasoTutorial("¡Listo! Empieza a monitorear", "El nodo aparecerá aquí y verás sus capturas en vivo")
@@ -98,7 +98,7 @@ class Inicio : AppCompatActivity() {
 
     private val pasosSerie = listOf(
         PasoTutorial("Enciende la trampa", "Presiona el botón que está en la tapa"),
-        PasoTutorial("Busca el número de serie", "Se encuentra en la parte inferior del dispositivo, junto al QR"),
+        PasoTutorial("Busca el número de serie", "Se encuentra en la parte superior del dispositivo, junto al QR"),
         PasoTutorial("Escríbelo en la app", "Ve a la pestaña 'Vincular' y selecciona 'Número de serie'"),
         PasoTutorial("Confirma la conexión", "Verifica que el número coincida y confirma"),
         PasoTutorial("¡Listo! Empieza a monitorear", "El nodo aparecerá aquí y verás sus capturas en vivo")
@@ -209,8 +209,8 @@ class Inicio : AppCompatActivity() {
         btnTutorialQr.setOnClickListener { cambiarMetodoTutorial(MetodoVinculacion.QR) }
         btnTutorialSerie.setOnClickListener { cambiarMetodoTutorial(MetodoVinculacion.SERIE) }
 
-        // Estado inicial: pasos de QR (el XML ya muestra ese segmento resaltado por defecto)
-        mostrarPasos(pasosQr)
+        // Estado inicial: pasos de Número de serie (el XML ya muestra ese segmento resaltado por defecto)
+        mostrarPasos(pasosSerie)
         configurarVideoPreview(videoResPara(metodoActual))
 
         // Tocar el video (o la tarjeta completa) abre la versión completa con sonido y controles,
@@ -238,6 +238,8 @@ class Inicio : AppCompatActivity() {
             overridePendingTransition(0, 0)
             finish()
         }*/
+
+        cargarDispositivosDesdeAzure()
 
         swipeRefreshLayout.setOnRefreshListener {
             cargarDispositivosDesdeAzure()
@@ -535,13 +537,6 @@ class Inicio : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-
-        if(primeraCargaCompleta){
-            swipeRefreshLayout.isRefreshing = true
-        }
-
-        cargarDispositivosDesdeAzure()
-
         if (::emptyState.isInitialized && emptyState.visibility == View.VISIBLE) {
             reanudarVideoPreview()
         }

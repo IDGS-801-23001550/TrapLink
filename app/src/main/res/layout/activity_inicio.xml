@@ -44,9 +44,8 @@
                     app:cardPreventCornerOverlap="false">
 
                     <FrameLayout
-                        android:layout_width="50dp"
+                        android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:layout_gravity="center"
                         android:background="@mipmap/ic_traplink">
                     </FrameLayout>
 
@@ -480,7 +479,7 @@
                     android:padding="4dp">
 
                     <TextView
-                        android:id="@+id/btnTutorialQr"
+                        android:id="@+id/btnTutorialSerie"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
@@ -488,20 +487,20 @@
                         android:clickable="true"
                         android:focusable="true"
                         android:gravity="center"
-                        android:text="Código QR"
+                        android:text="Número de serie"
                         android:textColor="@color/text_title_dark"
                         android:textSize="12sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/btnTutorialSerie"
+                        android:id="@+id/btnTutorialQr"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:clickable="true"
                         android:focusable="true"
                         android:gravity="center"
-                        android:text="Número de serie"
+                        android:text="Código QR"
                         android:textColor="@color/text_body_grey"
                         android:textSize="12sp" />
 
@@ -605,7 +604,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Se encuentra en la parte inferior del dispositivo"
+                        android:text="Se encuentra en la parte superior del dispositivo"
                         android:textColor="@color/text_body_grey"
                         android:textSize="12sp"
                         app:layout_constraintEnd_toEndOf="parent"
