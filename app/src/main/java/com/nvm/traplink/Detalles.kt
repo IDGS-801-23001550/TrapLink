@@ -247,6 +247,8 @@ class Detalles : AppCompatActivity() {
 
         // Manejo de Comandos WS
         btnLocalizar.setOnClickListener {
+            Toast.makeText(this, "Enviando señal de localización...", Toast.LENGTH_SHORT).show()
+
             enviarComandoWebSocket(nombre, "LOCALIZAR")
             actualizarEstadoChip("Localizando dispositivo en campo...", R.drawable.bg_chip_battery, R.color.chip_text_battery)
             iniciarPulso()
@@ -448,10 +450,6 @@ class Detalles : AppCompatActivity() {
 
                 webSocket.send(jsonMessage)
                 webSocket.close(1000, "Comando enviado")
-
-                runOnUiThread {
-                    Toast.makeText(this@Detalles, "WS: Comando '$comando' enviado a $targetId", Toast.LENGTH_SHORT).show()
-                }
             }
         }
         client.newWebSocket(request, webSocketListener)

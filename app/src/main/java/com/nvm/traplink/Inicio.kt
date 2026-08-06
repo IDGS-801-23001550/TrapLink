@@ -239,8 +239,6 @@ class Inicio : AppCompatActivity() {
             finish()
         }*/
 
-        cargarDispositivosDesdeAzure()
-
         swipeRefreshLayout.setOnRefreshListener {
             cargarDispositivosDesdeAzure()
         }
@@ -537,6 +535,13 @@ class Inicio : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+
+        if(primeraCargaCompleta){
+            swipeRefreshLayout.isRefreshing = true
+        }
+
+        cargarDispositivosDesdeAzure()
+
         if (::emptyState.isInitialized && emptyState.visibility == View.VISIBLE) {
             reanudarVideoPreview()
         }
