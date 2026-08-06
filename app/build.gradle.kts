@@ -33,6 +33,15 @@ android {
 
 dependencies {
 
+    // CameraX
+    implementation("androidx.camera:camera-core:1.3.4")
+    implementation("androidx.camera:camera-camera2:1.3.4")
+    implementation("androidx.camera:camera-lifecycle:1.3.4")
+    implementation("androidx.camera:camera-view:1.3.4")
+
+// ML Kit — escaneo de código de barras en el dispositivo (reemplaza a play-services-code-scanner)
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
+
     //Retrofit para las peticiones HTTP
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     //Converter Gson para convertir Json a objetos de Kotlin
@@ -41,14 +50,14 @@ dependencies {
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
     implementation("com.microsoft.signalr:signalr:8.0.0")
     // Google ML Kit Barcode Scanning (Para el QR de la trampa)
-    implementation("com.google.mlkit:barcode-scanning:17.3.0")
+    //implementation("com.google.mlkit:barcode-scanning:17.3.0")
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.material)
-    implementation(libs.play.services.code.scanner)
+    //implementation(libs.play.services.code.scanner)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)

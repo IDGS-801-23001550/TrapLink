@@ -257,7 +257,7 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- ===== SECCIÓN: ESCANEAR QR (visor tipo cámara) ===== -->
+                <!-- ===== SECCIÓN: ESCANEAR QR (cámara en vivo dentro del visor) ===== -->
                 <LinearLayout
                     android:id="@+id/seccionQR"
                     android:layout_width="match_parent"
@@ -271,18 +271,16 @@
                         android:layout_height="180dp"
                         android:layout_marginBottom="18dp"
                         android:background="@drawable/bg_scan_frame"
-                        android:clipChildren="true">
+                        android:clipChildren="true"
+                        android:clipToOutline="true">
 
-                        <!-- Ícono QR tenue de referencia dentro del visor -->
-                        <ImageView
-                            android:layout_width="60dp"
-                            android:layout_height="60dp"
-                            android:layout_gravity="center"
-                            android:alpha="0.25"
-                            android:src="@drawable/ic_qr_scan"
-                            app:tint="@color/accent_neon" />
+                        <!-- Preview de CameraX: la cámara se ve en vivo dentro de este recuadro -->
+                        <androidx.camera.view.PreviewView
+                            android:id="@+id/previewView"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent" />
 
-                        <!-- Esquinas tipo visor de cámara -->
+                        <!-- Esquinas tipo visor de cámara, encima del feed en vivo -->
                         <ImageView
                             android:layout_width="26dp"
                             android:layout_height="26dp"
@@ -314,7 +312,7 @@
                             android:rotation="270"
                             android:src="@drawable/ic_corner_bracket" />
 
-                        <!-- Línea láser animada -->
+                        <!-- Línea láser animada, encima del feed en vivo -->
                         <View
                             android:id="@+id/scanLine"
                             android:layout_width="match_parent"
@@ -323,6 +321,7 @@
                             android:background="@drawable/bg_scan_line" />
                     </FrameLayout>
 
+                    <!-- Solo visible mientras falta el permiso de cámara; se oculta apenas la cámara queda activa -->
                     <LinearLayout
                         android:id="@+id/btnEscanearQR"
                         android:layout_width="match_parent"
@@ -344,7 +343,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
-                            android:text="Abrir cámara y escanear"
+                            android:text="Activar cámara"
                             android:textColor="@color/accent_neon"
                             android:textSize="14sp"
                             android:textStyle="bold" />

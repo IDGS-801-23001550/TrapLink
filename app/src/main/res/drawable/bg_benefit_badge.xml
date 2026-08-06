@@ -1,4 +1,4 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval">
-    <solid android:color="#1A1DD1A1" /> <!-- accent_neon al ~10% opacidad -->
+    <solid android:color="#1AF5A623" /> <!-- dorado al ~10% opacidad -->
 </shape>

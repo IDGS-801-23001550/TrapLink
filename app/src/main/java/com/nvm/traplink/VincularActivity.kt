@@ -5,7 +5,6 @@ import android.animation.ObjectAnimator
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.view.Gravity
 import android.view.View
 import android.view.animation.LinearInterpolator
 import android.widget.EditText
@@ -18,18 +17,28 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalGetImage
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions
+import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
-import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
-import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
+import com.google.mlkit.vision.common.InputImage
 import com.nvm.traplink.data.RetrofitClient
 import com.nvm.traplink.data.VincularRequestDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import kotlin.random.Random
 
 class VincularActivity : AppCompatActivity() {
@@ -52,6 +61,12 @@ class VincularActivity : AppCompatActivity() {
     private lateinit var tvUltimoVinculadoSerie: TextView
     private lateinit var tvUltimoVinculadoTiempo: TextView
 
+    // ===== Cámara en vivo (CameraX) para el escaneo de QR dentro del recuadro =====
+    private lateinit var previewView: PreviewView
+    private lateinit var cameraExecutor: ExecutorService
+    private var cameraProvider: ProcessCameraProvider? = null
+    private var escaneando = false // evita procesar el mismo código varias veces mientras se vincula
+
     private var isDarkThemeActive: Boolean = false
     private var cargando: Boolean = false
     private var scanLineAnimator: ObjectAnimator? = null
@@ -62,7 +77,7 @@ class VincularActivity : AppCompatActivity() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            iniciarEscaneoQR()
+            iniciarCamaraEnVivo()
         } else {
             Toast.makeText(this, "Se requiere el permiso de cámara para escanear códigos QR", Toast.LENGTH_LONG).show()
         }
@@ -112,6 +127,9 @@ class VincularActivity : AppCompatActivity() {
         seccionManual = findViewById(R.id.seccionManual)
         seccionQR = findViewById(R.id.seccionQR)
         scanLine = findViewById(R.id.scanLine)
+        previewView = findViewById(R.id.previewView)
+
+        cameraExecutor = Executors.newSingleThreadExecutor()
 
         cardUltimoVinculado = findViewById(R.id.cardUltimoVinculado)
         tvUltimoVinculadoSerie = findViewById(R.id.tvUltimoVinculadoSerie)
@@ -146,7 +164,7 @@ class VincularActivity : AppCompatActivity() {
 
         btnEscanearQR.setOnClickListener {
             if (cargando) return@setOnClickListener
-            verificarPermisosYEscandear()
+            verificarPermisosYCamara()
         }
 
         btnNavDispositivos.setOnClickListener {
@@ -203,6 +221,7 @@ class VincularActivity : AppCompatActivity() {
             seccionManual.visibility = View.VISIBLE
             seccionQR.visibility = View.GONE
             detenerLineaLaser()
+            detenerCamara()
         } else {
             tabQR.setBackgroundResource(R.drawable.bg_toggle_active)
             tabQR.setTextColor(ContextCompat.getColor(this, R.color.text_title_dark))
@@ -212,6 +231,7 @@ class VincularActivity : AppCompatActivity() {
             seccionQR.visibility = View.VISIBLE
             seccionManual.visibility = View.GONE
             iniciarLineaLaser()
+            verificarPermisosYCamara()
         }
     }
 
@@ -239,6 +259,8 @@ class VincularActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         detenerLineaLaser()
+        detenerCamara()
+        cameraExecutor.shutdown()
     }
 
     // ===================== ÚLTIMO VINCULADO =====================
@@ -256,36 +278,99 @@ class VincularActivity : AppCompatActivity() {
         prefs.edit().putString("ULTIMO_VINCULADO_SERIE", numeroSerie).apply()
     }
 
-    // ===================== ESCANEO QR =====================
+    // ===================== CÁMARA EN VIVO + ESCANEO QR (CameraX + ML Kit on-device) =====================
 
-    private fun verificarPermisosYEscandear() {
+    private fun verificarPermisosYCamara() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-            iniciarEscaneoQR()
+            iniciarCamaraEnVivo()
         } else {
             requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
 
-    private fun iniciarEscaneoQR() {
-        val options = GmsBarcodeScannerOptions.Builder()
-            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-            .enableAutoZoom()
-            .build()
+    /**
+     * Abre la cámara trasera directamente dentro de [previewView] (el recuadro del visor)
+     * y arranca el análisis de frames en vivo para detectar el QR sin salir de la pantalla.
+     */
+    private fun iniciarCamaraEnVivo() {
+        escaneando = true
+        btnEscanearQR.visibility = View.GONE // ya no hace falta: la cámara queda activa dentro del recuadro
 
-        val scanner = GmsBarcodeScanning.getClient(this, options)
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+        cameraProviderFuture.addListener({
+            val provider = cameraProviderFuture.get()
+            cameraProvider = provider
 
-        scanner.startScan()
-            .addOnSuccessListener { barcode ->
-                val valorDetectado = barcode.rawValue
-                if (!valorDetectado.isNullOrEmpty()) {
-                    etNumeroSerie.setText(valorDetectado)
-                    Toast.makeText(this, "Código detectado con éxito", Toast.LENGTH_SHORT).show()
-                    ejecutarVinculacionEnAzure(valorDetectado)
+            val preview = Preview.Builder().build().also {
+                it.setSurfaceProvider(previewView.surfaceProvider)
+            }
+
+            val opcionesEscaner = BarcodeScannerOptions.Builder()
+                .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+                .build()
+            val scanner = BarcodeScanning.getClient(opcionesEscaner)
+
+            val analisis = ImageAnalysis.Builder()
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build()
+                .also {
+                    it.setAnalyzer(cameraExecutor) { imageProxy ->
+                        procesarFrameDeCamara(imageProxy, scanner)
+                    }
+                }
+
+            try {
+                provider.unbindAll()
+                provider.bindToLifecycle(
+                    this,
+                    CameraSelector.DEFAULT_BACK_CAMERA,
+                    preview,
+                    analisis
+                )
+            } catch (e: Exception) {
+                Toast.makeText(this, "No se pudo iniciar la cámara: ${e.message}", Toast.LENGTH_SHORT).show()
+                btnEscanearQR.visibility = View.VISIBLE
+            }
+        }, ContextCompat.getMainExecutor(this))
+    }
+
+    @OptIn(ExperimentalGetImage::class)
+    private fun procesarFrameDeCamara(imageProxy: ImageProxy, scanner: com.google.mlkit.vision.barcode.BarcodeScanner) {
+        val mediaImage = imageProxy.image
+        if (mediaImage == null || !escaneando) {
+            imageProxy.close()
+            return
+        }
+
+        val inputImage = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+
+        scanner.process(inputImage)
+            .addOnSuccessListener { codigosDetectados ->
+                val valorDetectado = codigosDetectados.firstOrNull()?.rawValue
+                if (!valorDetectado.isNullOrEmpty() && escaneando) {
+                    // Evita que sigamos procesando frames y disparando la vinculación varias veces
+                    escaneando = false
+                    runOnUiThread {
+                        etNumeroSerie.setText(valorDetectado)
+                        Toast.makeText(this, "Código detectado con éxito", Toast.LENGTH_SHORT).show()
+                        ejecutarVinculacionEnAzure(valorDetectado)
+                    }
                 }
             }
-            .addOnFailureListener { e ->
-                Toast.makeText(this, "Escaneo cancelado o fallido: ${e.message}", Toast.LENGTH_SHORT).show()
+            .addOnFailureListener {
+                // Un frame individual puede fallar sin problema; se sigue intentando con el siguiente
             }
+            .addOnCompleteListener {
+                imageProxy.close()
+            }
+    }
+
+    /** Libera la cámara. Se llama al salir del tab QR, y en onDestroy. */
+    private fun detenerCamara() {
+        cameraProvider?.unbindAll()
+        cameraProvider = null
+        escaneando = false
+        btnEscanearQR.visibility = View.VISIBLE
     }
 
     // ===================== VINCULACIÓN =====================
@@ -326,12 +411,15 @@ class VincularActivity : AppCompatActivity() {
                         val codigoError = response.code()
                         val mensajeError = response.errorBody()?.string() ?: "Error de servidor"
                         Toast.makeText(this@VincularActivity, "Error $codigoError: $mensajeError", Toast.LENGTH_LONG).show()
+                        // Si veníamos del QR, reactivamos el escaneo para que pueda intentar de nuevo
+                        escaneando = true
                     }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     mostrarEstadoCarga(false)
                     Toast.makeText(this@VincularActivity, "Error de red: ${e.message}", Toast.LENGTH_LONG).show()
+                    escaneando = true
                 }
             }
         }
